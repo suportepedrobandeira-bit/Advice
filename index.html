@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -252,7 +252,7 @@ const PREV={prospeccao:null,entrada:'prospeccao',onboarding:'entrada',concluido:
 let clients=[],kbHash='',kbSaving=false,newTarget='prospeccao';
 const chk={folha:false,contabil:false};
 
-function rowTo(r){return{id:r.id,nome:r.nome,cnpj:r.cnpj,segmento:r.segmento,responsavel:r.responsavel,socio:r.socio,telefone:r.telefone,email:r.email,honorarios:r.honorarios,dataEntrada:r.data_entrada,dataOnboarding:r.data_onboarding,dataConcluido:r.data_concluido,obs:r.obs,status:r.status,regime:r.regime,folha:r.folha,contabil:r.contabil};}
+function rowTo(r){return{id:r.id,nome:r.nome,cnpj:r.cnpj,segmento:r.segmento,responsavel:r.responsavel,socio:r.socio,telefone:r.telefone,email:r.email,honorarios:r.honorarios,dataEntrada:r.data_entrada,dataOnboarding:r.data_onboarding,dataConcluido:r.data_concluido,obs:r.obs,status:r.status,regime:r.regime,folha:r.folha,contabil:r.contabil,onb_fiscal:r.onb_fiscal,onb_dp:r.onb_dp,onb_contabil:r.onb_contabil,onb_bpo:r.onb_bpo};}
 async function loadKb(){const d=await api('/clientes?order=criado_em.asc');return d.map(rowTo);}
 
 async function initKb(){
@@ -301,6 +301,23 @@ function cardHTML(c,col){
     const cor=dr<0?'#dc2626':dr<=7?'#d97706':'#16a34a';const txt=dr<0?`⚠️ Vencido há ${Math.abs(dr)}d`:dr===0?'⚠️ Vence hoje':`✅ ${dr}d restantes`;
     prazo=`<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:${cor}12;border:1px solid ${cor}33"><div style="font-size:10px;font-weight:700;color:${cor};text-transform:uppercase;margin-bottom:1px">📅 Vencimento</div><div style="font-size:13px;font-weight:700;color:${cor}">${fmtDate(dv)}</div><div style="font-size:10px;color:${cor};opacity:.85">${txt}</div></div>`;
   }
+
+  // Bloco de onboarding com checks por setor
+  let onbBlock='';
+  if(c.status==='onboarding'){
+    const allDone=SETORES.every(s=>c['onb_'+s]==='ok'||c['onb_'+s]==='nd');
+    const doneCnt=SETORES.filter(s=>c['onb_'+s]==='ok'||c['onb_'+s]==='nd').length;
+    onbBlock=`<div style="margin-top:9px;padding:9px 10px;border-radius:9px;background:#f8fafc;border:1px solid #e5e7eb">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+        <span style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em">Reuniões de onboarding</span>
+        <span style="font-size:10px;font-weight:700;color:${allDone?'#16a34a':'#d97706'}">${doneCnt}/${SETORES.length}</span>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${SETORES.map(s=>setorCheckHTML(c.id,s,c['onb_'+s])).join('')}
+      </div>
+    </div>`;
+  }
+
   if(c.status==='prospeccao'){
     return`<div class="card" data-id="${c.id}" style="border-left-color:${col.color}">
       <div class="card-name">${esc(c.nome)}</div>
@@ -308,8 +325,23 @@ function cardHTML(c,col){
       <div class="card-foot"><div class="avatar" style="background:#fef3c7;color:#92400e">${(c.socio||'?')[0].toUpperCase()}</div><span style="font-size:11px;color:#6b7280;font-weight:600">${esc(c.socio||'Sem sócio')}</span></div>
     </div>`;
   }
+
   const socioNome=c.socio||c.responsavel||'';
+
+  // Badges de setor no topo do card (fora do card, visíveis no kanban)
+  let setorBadges='';
+  if(c.status==='onboarding'){
+    setorBadges=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">${SETORES.map(s=>{
+      const v=c['onb_'+s];
+      const cor=v==='ok'?'#16a34a':v==='nd'?'#9ca3af':'#dc2626';
+      const tc='#fff';
+      const lbl=v==='ok'?'✓':v==='nd'?'N/D':'●';
+      return`<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:${cor};color:${tc}">${SETOR_LABELS[s]} ${lbl}</span>`;
+    }).join('')}</div>`;
+  }
+
   return`<div class="card" data-id="${c.id}" style="border-left-color:${col.color}">
+    ${setorBadges}
     <div class="card-name">${esc(c.nome)}</div>
     ${c.cnpj?`<div class="card-cnpj">${esc(c.cnpj)}</div>`:''}
     <div class="badges">
@@ -321,6 +353,7 @@ function cardHTML(c,col){
       ${c.status==='onboarding'&&c.dataOnboarding?`<span class="badge" style="background:#fef3c7;color:#92400e">📅 ${fmtDate(c.dataOnboarding)}</span>`:''}
     </div>
     ${prazo}
+    ${onbBlock}
     <div class="card-foot">
       <div class="avatar" style="background:${col.color}22;color:${col.color}">${socioNome?socioNome[0].toUpperCase():'?'}</div>
       <span style="font-size:10px;color:#6b7280;font-weight:600">${esc(socioNome||'Sem sócio')}</span>
@@ -450,7 +483,31 @@ async function saveNew(){
   kbSaving=false;
 }
 
-async function loadMovs(){return await api('/movimentos?order=criado_em.asc');}
+// Setores de onboarding
+const SETORES=['fiscal','dp','contabil','bpo'];
+const SETOR_LABELS={fiscal:'Fiscal',dp:'DP',contabil:'Contábil',bpo:'BPO'};
+
+async function toggleSetor(clientId, setor, val){
+  try{
+    const field='onb_'+setor;
+    const payload={};payload[field]=val;
+    await api(`/clientes?id=eq.${clientId}`,{method:'PATCH',body:JSON.stringify(payload)});
+    clients=await loadKb();kbHash=hsh(clients);renderKb();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+function setorStatusIcon(val){
+  if(val==='ok')return`<span style="font-size:10px;background:#16a34a;color:#fff;border-radius:99px;padding:1px 5px;font-weight:700">✓</span>`;
+  if(val==='nd')return`<span style="font-size:10px;background:#9ca3af;color:#fff;border-radius:99px;padding:1px 5px;font-weight:700">N/D</span>`;
+  return`<span style="font-size:10px;background:#e5e7eb;color:#9ca3af;border-radius:99px;padding:1px 5px;font-weight:700">—</span>`;
+}
+
+function setorCheckHTML(clientId, setor, val){
+  const cor=val==='ok'?'#16a34a':val==='nd'?'#9ca3af':'#dc2626';
+  const next=val===null||val===undefined||val===''?'ok':val==='ok'?'nd':'';
+  const label=val==='ok'?'✓ '+SETOR_LABELS[setor]:val==='nd'?'N/D':SETOR_LABELS[setor];
+  return`<div onclick="event.stopPropagation();toggleSetor('${clientId}','${setor}','${next}')" style="cursor:pointer;padding:3px 7px;border-radius:6px;background:${cor};color:#fff;font-size:10px;font-weight:700;white-space:nowrap">${label}</div>`;
+}
 async function saveMovEntry(mov){await api('/movimentos',{method:'POST',body:JSON.stringify(mov)});}
 async function deleteMovEntry(id){await api(`/movimentos?id=eq.${id}`,{method:'DELETE'});}
 
