@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Advice · Pipeline</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh}
+button,input,select,textarea{font-family:inherit}
+.nav{background:#111827;display:flex;position:sticky;top:0;z-index:30}
+.nav-tab{flex:1;padding:0;border:none;background:transparent;color:#9ca3af;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:52px;border-bottom:3px solid transparent;transition:all .2s}
+.nav-tab.active{color:#fff;border-bottom-color:#1a6cf6}
+.page{display:none}.page.active{display:block}
+.board{display:flex;gap:14px;padding:16px;align-items:flex-start;overflow-x:auto;min-height:calc(100vh - 52px)}
+.col{flex:0 0 280px;background:#e4e8ef;border-radius:14px;padding:12px}
+.col-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:2px 4px}
+.col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.col-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#374151;flex:1}
+.col-count{font-size:11px;font-weight:700;background:#fff;border-radius:99px;padding:2px 9px;color:#6b7280}
+.card{background:#fff;border-radius:10px;padding:12px 14px;cursor:pointer;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.07);border-left:3px solid transparent;transition:box-shadow .15s}
+.card:hover{box-shadow:0 4px 14px rgba(0,0,0,.11)}
+.card:active{transform:scale(.98)}
+.card-name{font-size:13px;font-weight:600;color:#111827;margin-bottom:3px}
+.card-cnpj{font-size:10px;color:#9ca3af;font-family:monospace;margin-bottom:7px}
+.badges{display:flex;gap:4px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+.competencia-badge{font-size:12px;font-weight:800;padding:5px 12px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(124,58,237,.35);letter-spacing:.01em;width:100%;justify-content:center}
+.card-foot{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #f3f4f6}
+.avatar{width:18px;height:18px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#6b7280;flex-shrink:0}
+.add-btn{width:100%;padding:9px;font-size:12px;color:#9ca3af;background:rgba(255,255,255,.6);border:1.5px dashed #cbd5e1;border-radius:10px;cursor:pointer;font-weight:500;margin-top:4px}
+.add-btn:hover{border-color:#1a6cf6;color:#1a6cf6;background:#fff}
+.empty{text-align:center;padding:24px 8px;color:#cbd5e1;font-size:12px}
+.ctrl-page{padding:16px;padding-bottom:80px;max-width:900px;margin:0 auto}
+.ctrl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.ctrl-title{font-family:Georgia,serif;font-size:18px;font-weight:600;color:#111827}
+.period-sel{display:flex;gap:8px;align-items:center}
+.period-sel select{padding:7px 12px;border:1px solid #e5e7eb;border-radius:9px;font-size:13px;background:#fff;color:#111827;outline:none;-webkit-appearance:none;cursor:pointer}
+.resumo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:600px){.resumo-grid{grid-template-columns:repeat(5,1fr)}}
+.resumo-card{background:#fff;border-radius:12px;padding:14px 16px;border-left:4px solid}
+.resumo-label{font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.resumo-val{font-size:20px;font-weight:700}
+.resumo-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.ranking-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.rank-card{background:#fff;border-radius:12px;padding:14px;text-align:center;border-top:3px solid}
+.rank-pos{font-size:22px;margin-bottom:4px}
+.rank-nome{font-size:13px;font-weight:700;color:#111827;margin-bottom:6px}
+.section-title{font-size:12px;font-weight:700;color:#6b7280;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.table-wrap{background:#fff;border-radius:12px;overflow:hidden;margin-bottom:16px;border:1px solid #e5e7eb}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;padding:10px 14px;text-align:left;background:#f9fafb;border-bottom:1px solid #e5e7eb}
+td{font-size:13px;color:#374151;padding:10px 14px;border-bottom:1px solid #f3f4f6}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f9fafb}
+.td-nome{font-weight:600;color:#111827}
+.td-val-pos{font-weight:700;color:#16a34a}
+.td-val-neg{font-weight:700;color:#dc2626}
+.tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+.fab-ctrl{position:fixed;bottom:24px;right:18px;display:flex;flex-direction:column;gap:10px;z-index:19}
+.fab-btn{width:48px;height:48px;border-radius:99px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-head{padding:14px 18px 12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.sheet-title{font-family:Georgia,serif;font-size:17px;font-weight:600;color:#111827}
+.close-btn{width:32px;height:32px;border:none;background:#f3f4f6;border-radius:8px;font-size:18px;color:#6b7280;cursor:pointer}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;color:#6b7280;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;font-size:14px;border:1px solid #e5e7eb;border-radius:9px;background:#fff;color:#111827;outline:none;-webkit-appearance:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:#1a6cf6}
+.field textarea{resize:vertical;min-height:68px}
+.field-competencia input{border-color:#7c3aed!important;background:#faf5ff!important}
+.field-competencia label{color:#7c3aed!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet-foot{padding:12px 18px calc(20px + env(safe-area-inset-bottom));border-top:1px solid #f3f4f6;display:flex;flex-direction:column;gap:9px}
+.foot-row{display:flex;gap:8px}
+.btn{padding:11px 14px;font-size:13px;font-weight:600;border-radius:10px;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;flex:1}
+.btn-primary{background:#111827;color:#fff;border-color:#111827}
+.btn-blue{background:#1a6cf6;color:#fff;border-color:#1a6cf6;flex:2}
+.btn-green{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn-danger{border-color:#fca5a5;color:#dc2626;flex:.7}
+.status-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;display:inline-block}
+.chk-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:9px;margin-bottom:7px;cursor:pointer;border:1px solid #e5e7eb;background:#fff;-webkit-user-select:none;user-select:none}
+.chk-box{width:19px;height:19px;border-radius:5px;border:2px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-sep{border-top:1px solid #f3f4f6;padding-top:14px;margin-bottom:13px}
+.section-lbl{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:99px;z-index:999;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(min-width:700px){.overlay{align-items:center;padding:16px}.sheet{border-radius:16px;max-width:580px;max-height:92vh}}
+</style>
+</head>
+<body>
+<!-- Tela de seleção de usuário -->
+<div id="user-screen" style="position:fixed;inset:0;background:#111827;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="width:56px;height:56px;background:#1a6cf6;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
+    <div style="font-family:Georgia,serif;font-size:24px;font-weight:600;color:#fff;margin-bottom:6px">Advice · Pipeline</div>
+    <div style="font-size:13px;color:#9ca3af">Quem está acessando?</div>
+  </div>
+  <div style="width:100%;max-width:320px">
+    <select id="select-usuario" style="width:100%;padding:14px 16px;font-size:16px;border-radius:12px;border:2px solid #374151;background:#1f2937;color:#fff;outline:none;margin-bottom:14px;cursor:pointer;font-family:inherit;appearance:auto;-webkit-appearance:auto">
+      <option value="">— Selecione seu nome —</option>
+      <option value="Pedro">Pedro</option>
+      <option value="Luciano">Luciano</option>
+      <option value="Rafael">Rafael</option>
+      <option value="Karine">Karine</option>
+      <option value="Luciana">Luciana</option>
+      <option value="Cassia">Cassia</option>
+      <option value="Eduardo">Eduardo</option>
+      <option value="Larissa">Larissa</option>
+      <option value="Financeiro">Financeiro</option>
+    </select>
+    <button onclick="entrarApp()" style="width:100%;padding:14px;background:#1a6cf6;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit">
+      Entrar
+    </button>
+  </div>
+</div>
+
+<div id="app-container" style="display:none"><div class="nav">
+  <button class="nav-tab active" id="tab-kanban" onclick="switchPage('kanban')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Pipeline
+  </button>
+  <button class="nav-tab" id="tab-legal" onclick="switchPage('legal')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Legalização
+  </button>
+  <button class="nav-tab" id="tab-ctrl" onclick="switchPage('ctrl')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    Controle
+  </button>
+  <button class="nav-tab" id="tab-log" onclick="switchPage('log')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Log
+  </button>
+  <button class="nav-tab" onclick="trocarUsuario()" style="flex:0.6;max-width:80px" title="Trocar usuário">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span id="user-indicator" style="font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70px"></span>
+  </button>
+</div>
+
+<div class="page active" id="page-kanban">
+  <div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 16px;position:sticky;top:52px;z-index:15">
+  <div style="position:relative;max-width:400px">
+    <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="kb-busca" type="text" placeholder="Buscar cliente..." oninput="kbBusca=this.value;renderKb()" style="width:100%;padding:9px 12px 9px 34px;font-size:13px;border:1px solid #e5e7eb;border-radius:10px;outline:none;font-family:inherit;background:#f9fafb">
+  </div>
+</div>
+<div id="loading-kb" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100vh - 52px);gap:14px">
+    <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#1a6cf6;border-radius:50%;animation:spin .7s linear infinite"></div>
+    <div style="font-size:13px;color:#9ca3af">Carregando...</div>
+  </div>
+  <div id="board" class="board" style="display:none"></div>
+</div>
+
+<div class="page" id="page-ctrl">
+  <div class="ctrl-page">
+    <div class="ctrl-header">
+      <div class="ctrl-title">Controle de Clientes</div>
+      <div class="period-sel">
+        <select id="sel-mes" onchange="renderCtrl()"></select>
+        <select id="sel-ano" onchange="renderCtrl()"></select>
+      </div>
+    </div>
+    <div id="ctrl-content"></div>
+  </div>
+  <div class="fab-ctrl">
+    <button class="fab-btn" style="background:#dc2626" onclick="openMovimento('saida')">−</button>
+    <button class="fab-btn" style="background:#16a34a" onclick="openMovimento('entrada')">+</button>
+  </div>
+</div>
+
+<!-- Modal editar cliente -->
+<div class="page" id="page-legal">
+  <div id="loading-legal" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100vh - 52px);gap:14px">
+    <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#0ea5e9;border-radius:50%;animation:spin .7s linear infinite"></div>
+    <div style="font-size:13px;color:#9ca3af">Carregando...</div>
+  </div>
+  <div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 16px;position:sticky;top:52px;z-index:16" id="legal-busca-bar">
+    <div style="position:relative">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="legal-busca" type="text" placeholder="Buscar cliente..." oninput="legalBusca=this.value;renderLegal()" style="width:100%;padding:9px 12px 9px 34px;font-size:13px;border:1px solid #e5e7eb;border-radius:10px;outline:none;font-family:inherit;background:#f9fafb">
+    </div>
+  </div>
+  <div id="legal-filtro-bar" style="display:none;background:#fff;border-bottom:1px solid #e5e7eb;padding:8px 16px;position:sticky;top:52px;z-index:15;overflow-x:auto;white-space:nowrap">
+    <div style="font-size:9px;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px">Analista</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button onclick="setFiltroAnalista('')" id="filtro-todos" style="padding:6px 14px;border-radius:99px;border:2px solid #111827;background:#111827;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Todos</button>
+      <button onclick="setFiltroAnalista('Analista 1')" id="filtro-a1" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Analista 1</button>
+      <button onclick="setFiltroAnalista('Analista 2')" id="filtro-a2" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Analista 2</button>
+    </div>
+    <div style="font-size:9px;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px">Sócio</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="setFiltroSocio('')" id="filtro-socio-todos" style="padding:6px 14px;border-radius:99px;border:2px solid #111827;background:#111827;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Todos</button>
+      <button onclick="setFiltroSocio('Pedro')" id="filtro-socio-pedro" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Pedro</button>
+      <button onclick="setFiltroSocio('Luciano')" id="filtro-socio-luciano" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Luciano</button>
+      <button onclick="setFiltroSocio('Rafael')" id="filtro-socio-rafael" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Rafael</button>
+    </div>
+    <div style="font-size:9px;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;margin-top:8px">Situação</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="setFiltroExigencia(false)" id="filtro-exig-nao" style="padding:6px 14px;border-radius:99px;border:2px solid #111827;background:#111827;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Todos</button>
+      <button onclick="setFiltroExigencia(true)" id="filtro-exig-sim" style="padding:6px 14px;border-radius:99px;border:2px solid #e5e7eb;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">⚠️ Em Exigência</button>
+    </div>
+  </div>
+  <div id="legal-board" class="board" style="display:none"></div>
+  <button class="fab-btn" id="fab-legal" onclick="openNewLegal()" style="position:fixed;bottom:24px;right:18px;background:#0ea5e9;display:none;z-index:19;box-shadow:0 4px 14px rgba(14,165,233,.35)">+</button>
+</div>
+
+<div class="page" id="page-log">
+  <div style="padding:16px;max-width:700px;margin:0 auto;padding-bottom:80px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="font-family:Georgia,serif;font-size:18px;font-weight:600;color:#111827">📋 Log de Atividades</div>
+      <select id="log-filtro-usuario" onchange="renderLog()" style="padding:7px 12px;border:1px solid #e5e7eb;border-radius:9px;font-size:13px;background:#fff;color:#111827;outline:none;-webkit-appearance:none">
+        <option value="">Todos os usuários</option>
+        <option value="Pedro">Pedro</option>
+        <option value="Luciano">Luciano</option>
+        <option value="Rafael">Rafael</option>
+        <option value="Karine">Karine</option>
+        <option value="Luciana">Luciana</option>
+        <option value="Cassia">Cassia</option>
+        <option value="Eduardo">Eduardo</option>
+        <option value="Larissa">Larissa</option>
+        <option value="Financeiro">Financeiro</option>
+      </select>
+    </div>
+    <div id="log-content"><div style="text-align:center;padding:40px;color:#9ca3af;font-size:13px">Carregando...</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="edit-overlay"><div class="sheet" id="edit-sheet"></div></div>
+
+<!-- Modal novo cliente -->
+<div class="overlay" id="new-overlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div><div class="sheet-title">Novo cliente</div><span class="status-pill" id="new-pill"></span></div>
+      <button class="close-btn" onclick="closeNew()">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div class="field"><label>Razão social *</label><input id="n-nome" placeholder="Nome da empresa" autocomplete="off"/></div>
+
+      <!-- COMPETÊNCIA EM DESTAQUE -->
+      <div class="field field-competencia">
+        <label>📅 Competência — Mês que assumiremos o cliente</label>
+        <div class="grid2" style="margin-bottom:0">
+          <select id="n-comp-mes" style="border-color:#7c3aed;background:#faf5ff">
+            <option value="">Mês</option>
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+            <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+            <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+          <select id="n-comp-ano" style="border-color:#7c3aed;background:#faf5ff">
+            <option value="">Ano</option>
+          </select>
+        </div>
+        <div style="font-size:10px;color:#7c3aed;margin-top:4px;font-weight:500">Selecione o mês e ano de início dos serviços</div>
+      </div>
+
+      <div class="grid2">
+        <div class="field"><label>CNPJ</label><input id="n-cnpj" placeholder="00.000.000/0001-00"/></div>
+        <div class="field"><label>Segmento</label><select id="n-seg"><option value="">— Selecionar —</option><option>Serviço</option><option>Comércio</option><option>Indústria</option><option>Misto</option></select></div>
+        <div class="field"><label>Honorários mensais</label><input id="n-hon" placeholder="R$ 0,00" inputmode="numeric"/></div>
+        <div class="field"><label>Sócio responsável</label><select id="n-socio"><option value="">— Selecionar —</option><option>Pedro</option><option>Luciano</option><option>Rafael</option></select></div>
+        <div class="field"><label>Regime tributário</label><select id="n-regime"><option value="">— Selecionar —</option><option value="simples">Simples Nacional</option><option value="presumido">Lucro Presumido</option><option value="real">Lucro Real</option></select></div>
+        <div class="field"><label>Responsável</label><input id="n-resp" placeholder="Nome do contato"/></div>
+        <div class="field"><label>Telefone</label><input id="n-tel" placeholder="(00) 9 0000-0000"/></div>
+        <div class="field"><label>E-mail</label><input id="n-email" placeholder="email@empresa.com"/></div>
+        <div class="field"><label>Data entrada</label><input type="date" id="n-dentrada"/></div>
+        <div class="field"><label>Data onboarding</label><input type="date" id="n-donboard"/></div>
+      </div>
+      <div style="border-top:1px solid #f3f4f6;padding-top:12px;margin-top:4px">
+        <div class="section-lbl" style="margin-bottom:8px">Serviços contratados</div>
+        <div id="nchk-folha" class="chk-row" onclick="toggleNChk('folha')">
+          <div class="chk-box" id="nbox-folha"></div>
+          <span id="nlbl-folha" style="font-size:13px;color:#374151;font-weight:500">Folha de Pagamento</span>
+        </div>
+        <div id="nchk-contabil" class="chk-row" onclick="toggleNChk('contabil')">
+          <div class="chk-box" id="nbox-contabil"></div>
+          <span id="nlbl-contabil" style="font-size:13px;color:#374151;font-weight:500">Escrituração Contábil</span>
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px"><label>Observações</label><textarea id="n-obs" placeholder="Opcional"></textarea></div>
+    </div>
+    <div class="sheet-foot"><div class="foot-row"><button class="btn" onclick="closeNew()" style="flex:.5">Cancelar</button><button class="btn btn-primary" onclick="saveNew()">Adicionar</button></div></div>
+  </div>
+</div>
+
+<!-- Modal movimento -->
+<div class="overlay" id="mov-overlay">
+  <div class="sheet">
+    <div class="sheet-head"><div class="sheet-title" id="mov-title">Novo Movimento</div><button class="close-btn" onclick="closeMov()">×</button></div>
+    <div style="padding:16px 18px">
+      <div class="grid2">
+        <div class="field" style="grid-column:1/-1"><label>Nome do cliente *</label><input id="m-nome" placeholder="Razão social" autocomplete="off"/></div>
+        <div class="field"><label>Honorários mensais *</label><input id="m-hon" placeholder="R$ 0,00" inputmode="numeric"/></div>
+        <div class="field"><label>Valor anual (auto)</label><input id="m-anual" placeholder="R$ 0,00" readonly style="background:#f9fafb;color:#6b7280"/></div>
+        <div class="field"><label>Sócio responsável *</label><select id="m-socio"><option value="">— Selecionar —</option><option>Pedro</option><option>Luciano</option><option>Rafael</option></select></div>
+        <div class="field"><label>Segmento</label><select id="m-seg"><option value="">— Selecionar —</option><option>Serviço</option><option>Comércio</option><option>Indústria</option><option>Misto</option></select></div>
+        <div class="field"><label>Mês</label><select id="m-mes"></select></div>
+        <div class="field"><label>Ano</label><select id="m-ano"></select></div>
+        <div class="field" style="grid-column:1/-1"><label>Motivo / Observação</label><input id="m-obs" placeholder="Opcional"/></div>
+      </div>
+    </div>
+    <div class="sheet-foot"><div class="foot-row"><button class="btn" onclick="closeMov()" style="flex:.5">Cancelar</button><button class="btn btn-primary" id="mov-save-btn" onclick="saveMov()">Salvar</button></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="movdet-overlay"><div class="sheet" id="movdet-sheet"></div></div>
+<!-- Modal novo processo legal -->
+<div class="overlay" id="legal-new-overlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div><div class="sheet-title">Nova Solicitação</div><span class="status-pill" style="background:#e0f2fe;color:#0369a1" id="legal-new-pill">Solicitação Nova</span></div>
+      <button class="close-btn" onclick="closeLegalNew()">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div class="field"><label>Cliente / Empresa *</label><input id="ln-nome" placeholder="Razão social" autocomplete="off"/></div>
+      <div class="grid2">
+        <div class="field"><label>Tipo de Serviço</label><select id="ln-tipo"><option value="">— Selecionar —</option><option>Abertura de Empresa</option><option>Encerramento</option><option>Alteração Contratual</option><option>Alvará</option><option>Regularização Fiscal</option><option>Certidão</option><option>Procuração</option><option>Outro</option></select></div>
+        <div class="field"><label>Valor do Serviço (Abertura)</label><input id="ln-valor" placeholder="R$ 0,00" inputmode="numeric"/></div>
+      <div class="field"><label>Honorários Mensais</label><input id="ln-hon-mensais" placeholder="R$ 0,00" inputmode="numeric"/></div>
+        <div class="field"><label>Sócio Advice</label><select id="ln-socio"><option value="">— Selecionar —</option><option>Pedro</option><option>Luciano</option><option>Rafael</option></select></div>
+        <div class="field"><label>Responsável pela Empresa</label><input id="ln-resp" placeholder="Nome do responsável"/></div>
+      <div class="field"><label>Analista Responsável</label><select id="ln-analista" style="width:100%;padding:11px 13px;font-size:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;color:#111827;outline:none;-webkit-appearance:none"><option value="">— Selecionar —</option><option>Analista 1</option><option>Analista 2</option></select></div>
+        <div class="field"><label>Contato</label><input id="ln-contato" placeholder="Telefone ou e-mail"/></div>
+        <div class="field"><label>Prazo / Previsão</label><input type="date" id="ln-prazo"/></div>
+      </div>
+      <div class="field"><label>Dados do Cliente (para o processo)</label><textarea id="ln-dados" placeholder="CPF, RG, endereço, CNAE, capital social, etc."></textarea></div>
+      <div class="field"><label>Observações</label><textarea id="ln-obs" placeholder="Detalhe o que precisa ser feito"></textarea></div>
+    </div>
+    <div class="sheet-foot"><div class="foot-row"><button class="btn" onclick="closeLegalNew()" style="flex:.5">Cancelar</button><button class="btn btn-primary" onclick="saveLegalNew()">Adicionar</button></div></div>
+  </div>
+</div>
+
+<!-- Modal editar processo legal -->
+<div class="overlay" id="legal-edit-overlay"><div class="sheet" id="legal-edit-sheet"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Funções de usuário — definidas primeiro para o onclick do HTML funcionar
+window.entrarApp=function(){
+  const sel=document.getElementById('select-usuario');
+  const nome=sel?sel.value:'';
+  if(!nome){if(sel){sel.style.borderColor='#dc2626';setTimeout(()=>sel.style.borderColor='#374151',1500);}return;}
+  window.selecionarUsuario(nome);
+};
+window.selecionarUsuario=function(nome){
+  usuarioAtual=nome;
+  localStorage.setItem('advice_usuario',nome);
+  const us=document.getElementById('user-screen');
+  const ac=document.getElementById('app-container');
+  if(us)us.style.display='none';
+  if(ac){ac.style.display='block';ac.style.visibility='visible';}
+  const ind=document.getElementById('user-indicator');
+  if(ind)ind.textContent=nome;
+  setTimeout(function(){
+    if(typeof initKb==='function')initKb();
+    if(typeof initCtrl==='function')initCtrl();
+  },100);
+};
+window.trocarUsuario=function(){
+  document.getElementById('user-screen').style.display='flex';
+  document.getElementById('app-container').style.display='none';
+  const sel=document.getElementById('select-usuario');
+  if(sel)sel.value='';
+};
+const SUPA_URL='https://enkadazlxdflbwpaqwhg.supabase.co/rest/v1';
+const USUARIOS=['Pedro','Luciano','Rafael','Karine','Luciana','Cassia','Eduardo','Larissa','Financeiro'];
+let usuarioAtual=localStorage.getItem('advice_usuario')||null;
+
+function getDispositivo(){
+  const ua=navigator.userAgent;
+  let os='';
+  if(/iPhone/.test(ua)) os='iPhone';
+  else if(/iPad/.test(ua)) os='iPad';
+  else if(/Android/.test(ua)) os='Android';
+  else if(/Windows/.test(ua)) os='Windows';
+  else if(/Mac/.test(ua)) os='Mac';
+  else os='Outro';
+  let browser='';
+  if(/CriOS/.test(ua)) browser='Chrome/iOS';
+  else if(/FxiOS/.test(ua)) browser='Firefox/iOS';
+  else if(/Edg/.test(ua)) browser='Edge';
+  else if(/Chrome/.test(ua)) browser='Chrome';
+  else if(/Safari/.test(ua)) browser='Safari';
+  else if(/Firefox/.test(ua)) browser='Firefox';
+  else browser='Outro';
+  return os+' · '+browser;
+}
+
+async function registrarLog(acao, detalhe){
+  try{
+    const usuario=usuarioAtual||localStorage.getItem('advice_usuario')||'Desconhecido';
+    const dispositivo=getDispositivo();
+    await api('/logs',{method:'POST',body:JSON.stringify({
+      id:uid(),
+      usuario,
+      acao,
+      detalhe:detalhe+(dispositivo?' ['+dispositivo+']':''),
+    })});
+  }catch(e){console.warn('Log erro:',e.message);}
+}
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVua2FkYXpseGRmbGJ3cGFxd2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NDA2ODcsImV4cCI6MjEwMTUxNjY4N30.FwmiVWjo3Jn39o8cb081KUAvRhUMF7p3vSqA-t2p5Uc';
+const HDR={'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+
+async function api(path,opts={}){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const r=await fetch(SUPA_URL+path,{headers:HDR,signal:controller.signal,...opts});
+    clearTimeout(timer);
+    if(!r.ok)throw new Error(await r.text());
+    if(r.status===204)return null;
+    return r.json();
+  }catch(e){clearTimeout(timer);if(e.name==='AbortError')throw new Error('Tempo esgotado. Verifique sua conexão.');throw e;}
+}
+
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function fmtMonth(s){if(!s)return'';const[y,m]=s.split('-');return MESES[parseInt(m)-1]+'/'+y;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function hsh(d){return JSON.stringify(d);}
+function parseBRL(s){if(!s)return 0;return parseFloat(String(s).replace(/[R$\s]/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.'))||0;}
+function fmtBRL(v){return'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function addDays(ds,n){if(!ds)return null;const d=new Date(ds);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function diasRestantes(ds,n){if(!ds)return null;const a=new Date(ds);a.setDate(a.getDate()+n);const h=new Date();h.setHours(0,0,0,0);return Math.ceil((a-h)/(864e5));}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+
+function maskBRL(el){
+  let v=el.value.replace(/\D/g,'');
+  if(!v){el.value='';return;}
+  const n=(parseInt(v)/100).toFixed(2);
+  el.value='R$ '+parseFloat(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function bindBRL(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.removeEventListener('input',el._brl);
+  el._brl=()=>maskBRL(el);
+  el.addEventListener('input',el._brl);
+}
+
+function switchPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('tab-'+p).classList.add('active');
+  if(p==='ctrl')renderCtrl();
+}
+
+const COLS=[
+  {id:'prospeccao',label:'Prospecções',color:'#f59e0b'},
+  {id:'entrada',label:'Entrada',color:'#1a6cf6'},
+  {id:'legalizacao',label:'Legalização',color:'#0ea5e9'},
+  {id:'onboarding',label:'Onboarding',color:'#d97706'},
+  {id:'concluido',label:'Concluído',color:'#16a34a'},
+  {id:'rel30',label:'Relacionamento 30d',color:'#8b5cf6'},
+  {id:'atend30',label:'Atendido 30d',color:'#0891b2'},
+  {id:'rel60',label:'Relacionamento 60d',color:'#ec4899'},
+  {id:'atend60',label:'Atendido 60d',color:'#059669'},
+];
+const ST={
+  prospeccao:{bg:'#fef3c7',color:'#92400e',label:'Prospecção'},
+  entrada:{bg:'#dbeafe',color:'#1d4ed8',label:'Entrada'},
+  legalizacao:{bg:'#e0f2fe',color:'#0369a1',label:'Legalização'},
+  onboarding:{bg:'#fef3c7',color:'#92400e',label:'Onboarding'},
+  concluido:{bg:'#dcfce7',color:'#15803d',label:'Concluído'},
+  rel30:{bg:'#ede9fe',color:'#6d28d9',label:'Relacionamento 30d'},
+  atend30:{bg:'#cffafe',color:'#0e7490',label:'Atendido 30d'},
+  rel60:{bg:'#fce7f3',color:'#be185d',label:'Relacionamento 60d'},
+  atend60:{bg:'#d1fae5',color:'#065f46',label:'Atendido 60d'},
+};
+const REGIME={simples:'Simples',presumido:'Presumido',real:'Lucro Real'};
+const NEXT={prospeccao:'entrada',entrada:'onboarding',legalizacao:'onboarding',onboarding:'concluido',concluido:'rel30',rel30:'atend30',atend30:'rel60',rel60:'atend60',atend60:null};
+const PREV={prospeccao:null,entrada:'prospeccao',legalizacao:'entrada',onboarding:'entrada',concluido:'onboarding',rel30:'concluido',atend30:'rel30',rel60:'atend30',atend60:'rel60'};
+
+let clients=[],kbHash='',kbSaving=false,newTarget='prospeccao';
+const chk={folha:false,contabil:false,svc_fiscal:false,svc_dp:false,svc_bpo:false};
+
+function rowTo(r){return{id:r.id,nome:r.nome,cnpj:r.cnpj,segmento:r.segmento,responsavel:r.responsavel,socio:r.socio,telefone:r.telefone,email:r.email,honorarios:r.honorarios,competencia:r.competencia,dataEntrada:r.data_entrada,dataOnboarding:r.data_onboarding,dataConcluido:r.data_concluido,obs:r.obs,status:r.status,regime:r.regime,folha:r.folha,contabil:r.contabil,svc_fiscal:r.svc_fiscal,svc_dp:r.svc_dp,svc_bpo:r.svc_bpo,svc_cnpj:r.svc_cnpj,svc_insc_municipal:r.svc_insc_municipal,svc_sim_cim:r.svc_sim_cim,svc_cad_prefeitura:r.svc_cad_prefeitura,svc_procuracao:r.svc_procuracao,onb_fiscal:r.onb_fiscal,onb_dp:r.onb_dp,onb_contabil:r.onb_contabil,onb_bpo:r.onb_bpo};}
+async function loadKb(){const d=await api('/clientes?order=criado_em.asc');return d.map(rowTo);}
+
+async function initKb(){
+  try{
+    clients=await loadKb();kbHash=hsh(clients);
+    // Carregar processos de legalização para exibir no Pipeline (inclui arquivados)
+    try{
+      const allLegal=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+      legalItemsAll=allLegal.map(rowToLegal);
+      legalItems=legalItemsAll.filter(l=>l.status!=='legal_arquivado');
+      legalHash=hsh(legalItems);
+    }catch(e){
+      console.warn('Legal erro:',e.message);
+      legalItemsAll=[];legalItems=[];legalHash='[]';
+    }
+    document.getElementById('loading-kb').style.display='none';
+    document.getElementById('board').style.display='flex';
+    renderKb();
+    setInterval(async()=>{
+      if(kbSaving)return;
+      try{
+        const f=await loadKb();const h=hsh(f);
+        if(h!==kbHash){clients=f;kbHash=h;renderKb();}
+      }catch{}
+      // Atualizar legalizações para manter sincronizado no Pipeline
+      try{
+        const allL=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+        const fl=allL.map(rowToLegal);
+        legalItemsAll=fl;
+        const filteredL=fl.filter(l=>l.status!=='legal_arquivado');
+        const hl=hsh(filteredL);
+        if(hl!==legalHash){legalItems=filteredL;legalHash=hl;renderKb();}
+      }catch{}
+    },4000);
+  }catch(e){
+    document.getElementById('loading-kb').innerHTML=`<div style="text-align:center"><div style="font-size:32px;margin-bottom:10px">⚠️</div><div style="color:#dc2626;font-weight:600">Erro ao conectar</div><div style="color:#9ca3af;font-size:12px;margin-top:6px">${e.message}</div><button onclick="initKb()" style="margin-top:14px;padding:9px 20px;border-radius:9px;border:none;background:#111827;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Tentar novamente</button></div>`;
+  }
+}
+
+function rankingHTML(cards,col){
+  const socios=['Pedro','Luciano','Rafael'];
+  const dados=socios.map(s=>({nome:s,qtd:cards.filter(c=>c.socio===s).length,val:cards.filter(c=>c.socio===s).reduce((a,c)=>a+parseBRL(c.honorarios),0)})).filter(s=>s.qtd>0).sort((a,b)=>b.val-a.val);
+  if(dados.length===0)return'';
+  const medalhas=['🥇','🥈','🥉'];
+  const totalGeral=dados.reduce((a,s)=>a+s.val,0);
+  return`<div style="background:${col.color}12;border:1px solid ${col.color}33;border-radius:9px;padding:8px 10px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:10px;font-weight:700;color:${col.color};text-transform:uppercase;letter-spacing:.06em">🏆 Ranking</span>
+      <span style="font-size:13px;font-weight:800;color:${col.color}">${fmtBRL(totalGeral)}</span>
+    </div>
+    ${dados.map((s,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${i<dados.length-1?4:0}px"><span style="font-size:11px;font-weight:600;color:#374151">${medalhas[i]||''} ${s.nome}</span><div><span style="font-size:11px;font-weight:700;color:${col.color}">${fmtBRL(s.val)}</span><span style="font-size:10px;color:#9ca3af;margin-left:4px">(${s.qtd})</span></div></div>`).join('')}
+  </div>`;
+}
+
+const SETORES=['fiscal','dp','contabil','bpo'];
+const SETOR_LABELS={fiscal:'Fiscal',dp:'DP',contabil:'Contábil',bpo:'BPO'};
+
+function setorCheckHTML(clientId,setor,val){
+  const cor=val==='ok'?'#16a34a':val==='nd'?'#9ca3af':'#dc2626';
+  const next=(!val||val==='')?'ok':val==='ok'?'nd':'';
+  const label=val==='ok'?'✓ '+SETOR_LABELS[setor]:val==='nd'?'N/D':SETOR_LABELS[setor];
+  return`<div onclick="event.stopPropagation();toggleSetor('${clientId}','${setor}','${next}')" style="cursor:pointer;padding:3px 7px;border-radius:6px;background:${cor};color:#fff;font-size:10px;font-weight:700;white-space:nowrap">${label}</div>`;
+}
+
+async function toggleSetor(clientId,setor,val){
+  try{
+    const field='onb_'+setor;const payload={};payload[field]=val;
+    await api(`/clientes?id=eq.${clientId}`,{method:'PATCH',body:JSON.stringify(payload)});
+    clients=await loadKb();kbHash=hsh(clients);renderKb();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+function cardHTML(c,col){
+  // Bloco prazo rel30/rel60
+  let prazo='';
+  if((c.status==='rel30'||c.status==='rel60')&&c.dataConcluido){
+    const days=c.status==='rel30'?30:60;
+    const dv=addDays(c.dataConcluido,days);
+    const dr=diasRestantes(c.dataConcluido,days);
+    const cor=dr<0?'#dc2626':dr<=7?'#d97706':'#16a34a';
+    const txt=dr<0?`⚠️ Vencido há ${Math.abs(dr)}d`:dr===0?'⚠️ Vence hoje':`✅ ${dr}d restantes`;
+    prazo=`<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:${cor}12;border:1px solid ${cor}33"><div style="font-size:10px;font-weight:700;color:${cor};text-transform:uppercase;margin-bottom:1px">📅 Vencimento</div><div style="font-size:13px;font-weight:700;color:${cor}">${fmtDate(dv)}</div><div style="font-size:10px;color:${cor};opacity:.85">${txt}</div></div>`;
+  }
+
+  let onbBlock='';
+
+  // Badge competência — destaque roxo
+  const compBadge=c.competencia?`<div style="margin-bottom:8px;padding:6px 8px;border-radius:10px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd"><div style="font-size:9px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">Competência</div><span class="competencia-badge">📅 ${fmtMonth(c.competencia)}</span></div>`:'';
+
+  if(c.status==='prospeccao'){
+    return`<div class="card" data-id="${c.id}" style="border-left-color:${col.color}">
+      ${compBadge}
+      <div class="card-name">${esc(c.nome)}</div>
+      ${c.honorarios?`<div style="font-size:14px;font-weight:700;color:#f59e0b;margin:4px 0">${esc(c.honorarios)}</div>`:''}
+      <div class="card-foot"><div class="avatar" style="background:#fef3c7;color:#92400e">${(c.socio||'?')[0].toUpperCase()}</div><span style="font-size:11px;color:#6b7280;font-weight:600">${esc(c.socio||'Sem sócio')}</span></div>
+    </div>`;
+  }
+
+  let setorBadges='';
+
+  // Bloco de serviços de abertura (só para tipo Abertura de Empresa em finalizado/rel)
+  let aberturaBlock='';
+  if(c.segmento==='Abertura de Empresa'||(c.obs&&c.obs.includes('Abertura de Empresa'))){
+    const svcList=SVC_ABERTURA.map(s=>{
+      const done=!!c[s.key];
+      return`<div onclick="event.stopPropagation();toggleSvcAbertura('${c.id}','${s.key}',${done})" style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer">
+        <div style="width:14px;height:14px;border-radius:3px;border:2px solid ${done?'#16a34a':'#dc2626'};background:${done?'#16a34a':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          ${done?'<svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+        </div>
+        <span style="font-size:11px;font-weight:600;color:${done?'#16a34a':'#dc2626'}">${done?'✓':''} ${s.label}</span>
+        <div style="width:6px;height:6px;border-radius:50%;background:${done?'#16a34a':'#dc2626'};margin-left:auto;flex-shrink:0"></div>
+      </div>`;
+    }).join('');
+    aberturaBlock=`<div style="margin-top:8px;padding:8px 10px;border-radius:9px;background:#f8fafc;border:1px solid #e5e7eb">
+      <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Serviços Executados</div>
+      ${svcList}
+    </div>`;
+  }
+  const socioNome=c.socio||c.responsavel||'';
+  return`<div class="card" data-id="${c.id}" style="border-left-color:${col.color}">
+    ${compBadge}
+    ${setorBadges}
+    <div class="card-name">${esc(c.nome)}</div>
+    ${c.cnpj?`<div class="card-cnpj">${esc(c.cnpj)}</div>`:''}
+    <div class="badges">
+      ${c.segmento?`<span class="badge" style="background:${col.color}18;color:${col.color}">${esc(c.segmento)}</span>`:''}
+      ${c.regime?`<span class="badge" style="background:#f3f4f6;color:#6b7280">${REGIME[c.regime]||c.regime}</span>`:''}
+      ${c.folha?`<span class="badge" style="background:#eff6ff;color:#1d4ed8">Folha</span>`:''}
+      ${c.contabil?`<span class="badge" style="background:#f0fdf4;color:#15803d">Contábil</span>`:''}
+      ${c.svc_fiscal?`<span class="badge" style="background:#fef3c7;color:#92400e">Fiscal</span>`:''}
+      ${c.svc_dp?`<span class="badge" style="background:#f5f3ff;color:#6d28d9">DP</span>`:''}
+      ${c.svc_bpo?`<span class="badge" style="background:#fce7f3;color:#be185d">BPO</span>`:''}
+      ${c.honorarios?`<span class="badge" style="background:#f0fdf4;color:#16a34a">${fmtBRL(parseBRL(c.honorarios))}</span>`:''}
+      ${c.status==='onboarding'&&c.dataOnboarding?`<span class="badge" style="background:#fef3c7;color:#92400e">📅 ${fmtDate(c.dataOnboarding)}</span>`:''}
+    </div>
+    ${prazo}
+    ${onbBlock}
+    ${aberturaBlock}
+    <div class="card-foot">
+      <div class="avatar" style="background:${col.color}22;color:${col.color}">${socioNome?socioNome[0].toUpperCase():'?'}</div>
+      <span style="font-size:10px;color:#6b7280;font-weight:600">${esc(socioNome||'Sem sócio')}</span>
+    </div>
+  </div>`;
+}
+
+function renderKb(){
+  const board=document.getElementById('board');board.innerHTML='';
+  // Processos legais visíveis no Pipeline: finalizado, doc_finais ou arquivado — tipo Abertura de Empresa
+  const finalizadosPipeline=legalItemsAll.filter(l=>
+    (l.status==='legal_finalizado'||l.status==='legal_doc_finais'||l.status==='legal_arquivado')
+    &&l.tipo==='Abertura de Empresa'
+    &&!l.migrado_pipeline
+  );
+  COLS.forEach(col=>{
+    const allColCards=clients.filter(c=>c.status===col.id).slice().reverse();
+    const cards=kbBusca?allColCards.filter(c=>c.nome&&c.nome.toLowerCase().includes(kbBusca.toLowerCase())):allColCards;
+    const el=document.createElement('div');el.className='col';
+    let extra='';
+    {
+      const total=cards.reduce((a,c)=>a+parseBRL(c.honorarios),0);
+      const label=col.id==='prospeccao'?'Total potencial':'Total honorários';
+      extra=`<div style="background:${col.color}22;border:1px solid ${col.color}44;border-radius:9px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:700;color:${col.color};text-transform:uppercase;letter-spacing:.06em">${label}</span><span style="font-size:14px;font-weight:700;color:${col.color}">${fmtBRL(total)}</span></div>`;
+    }
+    // Coluna Legalização: mostrar processos finalizados da aba Legal (clicáveis)
+    if(col.id==='legalizacao'){
+      const finalizados=finalizadosPipeline;
+      if(finalizados.length>0){
+        extra+=`<div style="background:#16a34a12;border:1px solid #16a34a33;border-radius:9px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">✅ Processos Finalizados</div>
+          ${finalizados.map(l=>`
+            <div onclick="openLegalFromPipeline('${l.id}')" style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;border:1px solid #e5e7eb;border-left:3px solid #16a34a;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
+              <div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:4px">${esc(l.nome)}</div>
+              <div style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;padding:2px 8px;border-radius:99px;margin-bottom:5px">
+                <span style="font-size:10px;font-weight:700;color:#15803d">🏢 ${esc(l.tipo||'Abertura de Empresa')}</span>
+              </div>
+              ${l.valor?`<div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:2px">${fmtBRL(parseBRL(l.valor))}<span style="font-size:9px;color:#9ca3af;margin-left:3px">(abertura)</span></div>`:''}
+              ${l.honorarios_mensais?`<div style="font-size:12px;font-weight:700;color:#0ea5e9;margin-bottom:4px">${fmtBRL(parseBRL(l.honorarios_mensais))}<span style="font-size:9px;color:#9ca3af;margin-left:3px">/mês</span></div>`:''}
+              <div style="display:flex;flex-direction:column;gap:2px">
+                ${l.socio?`<div style="display:flex;gap:4px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:52px;flex-shrink:0">Sócio</span><span style="font-size:10px;color:#374151;font-weight:600">${esc(l.socio)}</span></div>`:''}
+                ${l.responsavel?`<div style="display:flex;gap:4px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:52px;flex-shrink:0">Resp.</span><span style="font-size:10px;color:#374151">${esc(l.responsavel)}</span></div>`:''}
+                ${l.contato?`<div style="display:flex;gap:4px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:52px;flex-shrink:0">Contato</span><span style="font-size:10px;color:#374151">${esc(l.contato)}</span></div>`:''}
+              </div>
+              <div style="margin-top:6px;font-size:9px;color:#0ea5e9;text-align:right;font-weight:600">Toque para mover ao Pipeline →</div>
+            </div>`).join('')}
+        </div>`;
+      }
+    }
+    extra+=rankingHTML(cards,col);
+    el.innerHTML=`<div class="col-hdr"><div class="col-dot" style="background:${col.color}"></div><span class="col-title">${col.label}</span><span class="col-count">${cards.length}</span></div><button class="add-btn" data-col="${col.id}" style="margin-bottom:8px">+ Novo cliente</button>${extra}${cards.length===0?'<div class="empty">Nenhum cliente</div>':''}${cards.map(c=>cardHTML(c,col)).join('')}`;
+    board.appendChild(el);
+  });
+  board.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>openEdit(el.dataset.id)));
+  board.querySelectorAll('.add-btn').forEach(el=>el.addEventListener('click',()=>openNew(el.dataset.col)));
+}
+
+function openEdit(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  chk.folha=!!c.folha;chk.contabil=!!c.contabil;chk.svc_fiscal=!!c.svc_fiscal;chk.svc_dp=!!c.svc_dp;chk.svc_bpo=!!c.svc_bpo;
+  const st=ST[c.status],nx=NEXT[c.status],pv=PREV[c.status];
+  const chkHTML=(key,label)=>`<div class="chk-row" id="row-${key}" onclick="toggleChk('${key}')" style="border-color:${chk[key]?'#1a6cf6':'#e5e7eb'};background:${chk[key]?'#eff6ff':'#fff'}"><div class="chk-box" id="box-${key}" style="border-color:${chk[key]?'#1a6cf6':'#d1d5db'};background:${chk[key]?'#1a6cf6':'#fff'}">${chk[key]?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div><span id="lbl-${key}" style="font-size:13px;color:${chk[key]?'#1d4ed8':'#374151'};font-weight:${chk[key]?600:500}">${label}</span></div>`;
+  document.getElementById('edit-sheet').innerHTML=`
+    <div class="sheet-head">
+      <div style="min-width:0"><div class="sheet-title">${esc(c.nome)}</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px"><span class="status-pill" style="background:${st.bg};color:${st.color}">${st.label}</span>${c.cnpj?`<span style="font-size:11px;color:#9ca3af;font-family:monospace">${esc(c.cnpj)}</span>`:''}</div></div>
+      <button class="close-btn" onclick="closeEdit()">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div class="grid2">
+        <div class="field"><label>Razão social</label><input id="e-nome" value="${esc(c.nome)}"/></div>
+        <div class="field"><label>CNPJ</label><input id="e-cnpj" value="${esc(c.cnpj||'')}"/></div>
+      </div>
+
+      <!-- COMPETÊNCIA EM DESTAQUE NO EDIT -->
+      <div class="field field-competencia">
+        <label>📅 Competência — Mês que assumiremos o cliente</label>
+        <div class="grid2" style="margin-bottom:0">
+          <select id="e-comp-mes" style="border-color:#7c3aed;background:#faf5ff">
+            <option value="">Mês</option>
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+            <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+            <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+          <select id="e-comp-ano" id="e-comp-ano" style="border-color:#7c3aed;background:#faf5ff">
+            <option value="">Ano</option>
+          </select>
+        </div>
+        <div style="font-size:10px;color:#7c3aed;margin-top:4px;font-weight:500">Selecione o mês e ano de início dos serviços</div>
+      </div>
+
+      <div class="grid2">
+        <div class="field"><label>Segmento</label><select id="e-seg"><option value="" ${!c.segmento?'selected':''}>— Selecionar —</option>${['Serviço','Comércio','Indústria','Misto'].map(s=>`<option ${c.segmento===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>Honorários</label><input id="e-hon" value="${esc(c.honorarios||'')}" inputmode="numeric"/></div>
+        <div class="field"><label>Responsável</label><input id="e-resp" value="${esc(c.responsavel||'')}"/></div>
+        <div class="field"><label>Sócio interno</label><select id="e-socio"><option value="" ${!c.socio?'selected':''}>— Selecionar —</option><option ${c.socio==='Pedro'?'selected':''}>Pedro</option><option ${c.socio==='Luciano'?'selected':''}>Luciano</option><option ${c.socio==='Rafael'?'selected':''}>Rafael</option></select></div>
+        <div class="field"><label>Telefone</label><input id="e-tel" value="${esc(c.telefone||'')}"/></div>
+        <div class="field"><label>E-mail</label><input id="e-email" value="${esc(c.email||'')}"/></div>
+        <div class="field"><label>Data entrada</label><input type="date" id="e-dentrada" value="${c.dataEntrada||''}"/></div>
+        <div class="field"><label>Data onboarding</label><input type="date" id="e-donboard" value="${c.dataOnboarding||''}"/></div>
+      </div>
+      <div class="section-sep">
+        <div class="section-lbl">Serviços contratados</div>
+        <div class="field"><label>Regime tributário</label><select id="e-regime"><option value="" ${!c.regime?'selected':''}>— Selecionar —</option><option value="simples" ${c.regime==='simples'?'selected':''}>Simples Nacional</option><option value="presumido" ${c.regime==='presumido'?'selected':''}>Lucro Presumido</option><option value="real" ${c.regime==='real'?'selected':''}>Lucro Real</option></select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px">
+          <div id="row-contabil" onclick="toggleChk('contabil')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${chk.contabil?'#1a6cf6':'#e5e7eb'};background:${chk.contabil?'#eff6ff':'#fff'};cursor:pointer">
+            <div id="box-contabil" style="width:18px;height:18px;border-radius:5px;border:2px solid ${chk.contabil?'#1a6cf6':'#d1d5db'};background:${chk.contabil?'#1a6cf6':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${chk.contabil?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+            <span id="lbl-contabil" style="font-size:13px;color:${chk.contabil?'#1d4ed8':'#374151'};font-weight:${chk.contabil?600:500}">Contábil</span>
+          </div>
+          <div id="row-fiscal" onclick="toggleChkSvc('fiscal')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${chk.svc_fiscal?'#d97706':'#e5e7eb'};background:${chk.svc_fiscal?'#fef3c7':'#fff'};cursor:pointer">
+            <div id="box-fiscal" style="width:18px;height:18px;border-radius:5px;border:2px solid ${chk.svc_fiscal?'#d97706':'#d1d5db'};background:${chk.svc_fiscal?'#d97706':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${chk.svc_fiscal?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+            <span id="lbl-fiscal" style="font-size:13px;color:${chk.svc_fiscal?'#92400e':'#374151'};font-weight:${chk.svc_fiscal?600:500}">Fiscal</span>
+          </div>
+          <div id="row-folha" onclick="toggleChk('folha')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${chk.folha?'#1a6cf6':'#e5e7eb'};background:${chk.folha?'#eff6ff':'#fff'};cursor:pointer">
+            <div id="box-folha" style="width:18px;height:18px;border-radius:5px;border:2px solid ${chk.folha?'#1a6cf6':'#d1d5db'};background:${chk.folha?'#1a6cf6':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${chk.folha?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+            <span id="lbl-folha" style="font-size:13px;color:${chk.folha?'#1d4ed8':'#374151'};font-weight:${chk.folha?600:500}">DP/Folha</span>
+          </div>
+          <div id="row-dp" onclick="toggleChkSvc('dp')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${chk.svc_dp?'#7c3aed':'#e5e7eb'};background:${chk.svc_dp?'#f5f3ff':'#fff'};cursor:pointer">
+            <div id="box-dp" style="width:18px;height:18px;border-radius:5px;border:2px solid ${chk.svc_dp?'#7c3aed':'#d1d5db'};background:${chk.svc_dp?'#7c3aed':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${chk.svc_dp?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+            <span id="lbl-dp" style="font-size:13px;color:${chk.svc_dp?'#6d28d9':'#374151'};font-weight:${chk.svc_dp?600:500}">DP</span>
+          </div>
+          <div id="row-bpo" onclick="toggleChkSvc('bpo')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${chk.svc_bpo?'#be185d':'#e5e7eb'};background:${chk.svc_bpo?'#fce7f3':'#fff'};cursor:pointer">
+            <div id="box-bpo" style="width:18px;height:18px;border-radius:5px;border:2px solid ${chk.svc_bpo?'#be185d':'#d1d5db'};background:${chk.svc_bpo?'#be185d':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${chk.svc_bpo?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+            <span id="lbl-bpo" style="font-size:13px;color:${chk.svc_bpo?'#be185d':'#374151'};font-weight:${chk.svc_bpo?600:500}">BPO</span>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Observações</label><textarea id="e-obs">${esc(c.obs||'')}</textarea></div>
+    </div>
+    <div class="sheet-foot">
+      <div class="foot-row">${pv?`<button class="btn" onclick="kbMover('${c.id}','${pv}')">← ${ST[pv].label}</button>`:''}${nx?`<button class="btn btn-blue" onclick="kbMover('${c.id}','${nx}')">Mover → ${ST[nx].label}</button>`:''}</div>
+      <div class="foot-row"><button class="btn btn-danger" onclick="kbDeletar('${c.id}')">Remover</button><button class="btn btn-primary" onclick="kbSalvar('${c.id}')">Salvar</button></div>
+    </div>`;
+  document.getElementById('edit-overlay').classList.add('open');
+  setTimeout(()=>{
+    bindBRL('e-hon');
+    // Populate year select for edit
+    const anoAtualE=new Date().getFullYear();
+    const selAnoE=document.getElementById('e-comp-ano');
+    if(selAnoE){selAnoE.innerHTML='<option value="">Ano</option>';for(let y=anoAtualE;y<=anoAtualE+5;y++){const o=document.createElement('option');o.value=y;o.textContent=y;selAnoE.appendChild(o);}}
+    // Set current value
+    if(c.competencia&&c.competencia.includes('-')){
+      const[cy,cm]=c.competencia.split('-');
+      const sm=document.getElementById('e-comp-mes');const sa=document.getElementById('e-comp-ano');
+      if(sm)sm.value=cm;if(sa)sa.value=cy;
+    }
+  },100);
+}
+
+function toggleChk(key){chk[key]=!chk[key];const v=chk[key];document.getElementById('row-'+key).style.borderColor=v?'#1a6cf6':'#e5e7eb';document.getElementById('row-'+key).style.background=v?'#eff6ff':'#fff';const box=document.getElementById('box-'+key);box.style.borderColor=v?'#1a6cf6':'#d1d5db';box.style.background=v?'#1a6cf6':'#fff';box.innerHTML=v?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';const lbl=document.getElementById('lbl-'+key);lbl.style.color=v?'#1d4ed8':'#374151';lbl.style.fontWeight=v?600:500;}
+const SVC_COLORS={fiscal:{border:'#d97706',bg:'#fef3c7',text:'#92400e'},dp:{border:'#7c3aed',bg:'#f5f3ff',text:'#6d28d9'},bpo:{border:'#be185d',bg:'#fce7f3',text:'#be185d'}};
+
+// Serviços de abertura — toggle direto no card
+const SVC_ABERTURA=[
+  {key:'svc_cnpj',label:'Solicitação CNPJ'},
+  {key:'svc_insc_municipal',label:'Inscrição Municipal'},
+  {key:'svc_sim_cim',label:'CIM'},
+  {key:'svc_cad_prefeitura',label:'Cadastro Prefeitura'},
+  {key:'svc_procuracao',label:'Procuração'},
+];
+
+async function toggleSvcAberturaLegal(clientId, field, currentVal, el){
+  const newVal=!currentVal;
+  try{
+    const payload={};payload[field]=newVal;
+    await api('/clientes?id=eq.'+clientId,{method:'PATCH',body:JSON.stringify(payload)});
+    // Atualizar visual imediatamente
+    const done=newVal;
+    el.style.borderColor=done?'#16a34a':'#dc2626';
+    el.style.background=done?'#f0fdf4':'#fff5f5';
+    const box=el.querySelector('div');
+    if(box){box.style.borderColor=done?'#16a34a':'#dc2626';box.style.background=done?'#16a34a':'#fff';box.innerHTML=done?'<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';}
+    const txt=el.querySelectorAll('span,div');
+    el.querySelectorAll('span')[0].style.color=done?'#15803d':'#dc2626';
+    el.querySelectorAll('div')[1].style.background=done?'#16a34a':'#dc2626';
+    // Atualizar dados locais
+    legalItems=legalItems.map(x=>{if(x.id===clientId){const u={...x};u[field]=done;return u;}return x;});
+    legalItemsAll=legalItemsAll.map(x=>{if(x.id===clientId){const u={...x};u[field]=done;return u;}return x;});
+    // Re-render para atualizar o onclick com novo valor
+    el.setAttribute('onclick',`toggleSvcAberturaLegal('${clientId}','${field}',${done},this)`);
+  }catch(e){showToast('Erro ao salvar');}
+}
+
+async function toggleSvcAbertura(clientId, field, currentVal){
+  const newVal=!currentVal;
+  try{
+    const payload={};payload[field]=newVal;
+    await api('/clientes?id=eq.'+clientId,{method:'PATCH',body:JSON.stringify(payload)});
+    clients=await loadKb();kbHash=hsh(clients);renderKb();
+  }catch(e){showToast('Erro ao salvar');}
+}
+function toggleChkSvc(key){
+  const fk='svc_'+key;chk[fk]=!chk[fk];const v=chk[fk];const c=SVC_COLORS[key];
+  const row=document.getElementById('row-'+key);const box=document.getElementById('box-'+key);const lbl=document.getElementById('lbl-'+key);
+  if(row){row.style.borderColor=v?c.border:'#e5e7eb';row.style.background=v?c.bg:'#fff';}
+  if(box){box.style.borderColor=v?c.border:'#d1d5db';box.style.background=v?c.border:'#fff';box.innerHTML=v?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';}
+  if(lbl){lbl.style.color=v?c.text:'#374151';lbl.style.fontWeight=v?600:500;}
+}
+function closeEdit(){document.getElementById('edit-overlay').classList.remove('open');}
+
+async function kbSalvar(id){
+  kbSaving=true;
+  try{
+    await api(`/clientes?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({
+      nome:document.getElementById('e-nome').value,
+      cnpj:document.getElementById('e-cnpj').value,
+      competencia:(()=>{const m=document.getElementById('e-comp-mes').value;const a=document.getElementById('e-comp-ano').value;return(m&&a)?a+'-'+m:'';})(),
+      segmento:document.getElementById('e-seg').value,
+      honorarios:document.getElementById('e-hon').value,
+      responsavel:document.getElementById('e-resp').value,
+      socio:document.getElementById('e-socio').value,
+      telefone:document.getElementById('e-tel').value,
+      email:document.getElementById('e-email').value,
+      data_entrada:document.getElementById('e-dentrada').value,
+      data_onboarding:document.getElementById('e-donboard').value,
+      obs:document.getElementById('e-obs').value,
+      regime:document.getElementById('e-regime').value,
+      folha:chk.folha,contabil:chk.contabil,svc_fiscal:chk.svc_fiscal,svc_dp:chk.svc_dp,svc_bpo:chk.svc_bpo
+    })});
+    clients=await loadKb();kbHash=hsh(clients);closeEdit();renderKb();showToast('✦ Salvo');registrarLog('Editou cliente',document.getElementById('f-nome')?.value||id);
+  }catch(e){alert('Erro: '+e.message);}
+  kbSaving=false;
+}
+
+async function kbMover(id,status){
+  kbSaving=true;const hoje=new Date().toISOString().slice(0,10);const payload={status};
+  if(status==='concluido')payload.data_concluido=hoje;
+  try{
+    await api(`/clientes?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(payload)});
+    if(status==='concluido'){
+      const orig=clients.find(c=>c.id===id);
+      if(orig){
+        await api('/clientes',{method:'POST',body:JSON.stringify({id:uid(),nome:orig.nome,cnpj:orig.cnpj,segmento:orig.segmento,responsavel:orig.responsavel,socio:orig.socio,telefone:orig.telefone,email:orig.email,honorarios:orig.honorarios,competencia:orig.competencia,regime:orig.regime,folha:orig.folha,contabil:orig.contabil,data_entrada:orig.dataEntrada,data_onboarding:orig.dataOnboarding,data_concluido:hoje,obs:'🔔 Relacionamento 30 dias',status:'rel30'})});
+        await api('/clientes',{method:'POST',body:JSON.stringify({id:uid(),nome:orig.nome,cnpj:orig.cnpj,segmento:orig.segmento,responsavel:orig.responsavel,socio:orig.socio,telefone:orig.telefone,email:orig.email,honorarios:orig.honorarios,competencia:orig.competencia,regime:orig.regime,folha:orig.folha,contabil:orig.contabil,data_entrada:orig.dataEntrada,data_onboarding:orig.dataOnboarding,data_concluido:hoje,obs:'🔔 Relacionamento 60 dias',status:'rel60'})});
+      }
+    }
+    clients=await loadKb();kbHash=hsh(clients);closeEdit();renderKb();
+    if(status==='concluido')showToast('✦ Concluído! Cards 30d e 60d criados');else showToast('✦ Movido para '+ST[status].label);registrarLog('Moveu cliente',`${clients.find(c=>c.id===id)?.nome||id} → ${ST[status].label}`);
+  }catch(e){alert('Erro: '+e.message);}
+  kbSaving=false;
+}
+
+async function kbDeletar(id){
+  if(!confirm('Remover este cliente?'))return;kbSaving=true;
+  try{const nomeD=clients.find(c=>c.id===id)?.nome||id;await api(`/clientes?id=eq.${id}`,{method:'DELETE'});clients=await loadKb();kbHash=hsh(clients);closeEdit();renderKb();showToast('✦ Removido');registrarLog('Removeu cliente',nomeD);}catch(e){alert('Erro: '+e.message);}
+  kbSaving=false;
+}
+
+const nchk={folha:false,contabil:false};
+function toggleNChk(key){
+  nchk[key]=!nchk[key];const v=nchk[key];
+  document.getElementById('nchk-'+key).style.borderColor=v?'#1a6cf6':'#e5e7eb';
+  document.getElementById('nchk-'+key).style.background=v?'#eff6ff':'#fff';
+  const box=document.getElementById('nbox-'+key);
+  box.style.borderColor=v?'#1a6cf6':'#d1d5db';box.style.background=v?'#1a6cf6':'#fff';
+  box.innerHTML=v?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';
+  const lbl=document.getElementById('nlbl-'+key);lbl.style.color=v?'#1d4ed8':'#374151';lbl.style.fontWeight=v?600:500;
+}
+
+function openNew(col){
+  newTarget=col||'prospeccao';const st=ST[newTarget];
+  const pill=document.getElementById('new-pill');pill.style.background=st.bg;pill.style.color=st.color;pill.textContent=st.label;
+  ['n-nome','n-cnpj','n-resp','n-hon','n-tel','n-email','n-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Populate year selects and reset
+  const anoAtualN=new Date().getFullYear();
+  const selAnoN=document.getElementById('n-comp-ano');
+  if(selAnoN){selAnoN.innerHTML='<option value="">Ano</option>';for(let y=anoAtualN;y<=anoAtualN+5;y++){const o=document.createElement('option');o.value=y;o.textContent=y;selAnoN.appendChild(o);}}
+  const selMesN=document.getElementById('n-comp-mes');if(selMesN)selMesN.value='';
+  ['n-seg','n-socio','n-regime'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['n-dentrada','n-donboard'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  nchk.folha=false;nchk.contabil=false;
+  ['folha','contabil'].forEach(key=>{
+    const row=document.getElementById('nchk-'+key);const box=document.getElementById('nbox-'+key);const lbl=document.getElementById('nlbl-'+key);
+    if(row){row.style.borderColor='#e5e7eb';row.style.background='#fff';}
+    if(box){box.style.borderColor='#d1d5db';box.style.background='#fff';box.innerHTML='';}
+    if(lbl){lbl.style.color='#374151';lbl.style.fontWeight=500;}
+  });
+  document.getElementById('new-overlay').classList.add('open');
+  setTimeout(()=>bindBRL('n-hon'),100);
+}
+function closeNew(){document.getElementById('new-overlay').classList.remove('open');}
+
+async function saveNew(){
+  const nome=document.getElementById('n-nome').value.trim();if(!nome){alert('Informe a razão social.');return;}
+  kbSaving=true;
+  try{
+    await api('/clientes',{method:'POST',body:JSON.stringify({
+      id:uid(),nome,
+      cnpj:document.getElementById('n-cnpj').value,
+      competencia:(()=>{const m=document.getElementById('n-comp-mes').value;const a=document.getElementById('n-comp-ano').value;return(m&&a)?a+'-'+m:'';})(),
+      segmento:document.getElementById('n-seg').value,
+      responsavel:document.getElementById('n-resp').value,
+      honorarios:document.getElementById('n-hon').value,
+      socio:document.getElementById('n-socio').value,
+      regime:document.getElementById('n-regime').value,
+      telefone:document.getElementById('n-tel').value,
+      email:document.getElementById('n-email').value,
+      obs:document.getElementById('n-obs').value,
+      data_entrada:document.getElementById('n-dentrada').value||new Date().toISOString().slice(0,10),
+      data_onboarding:document.getElementById('n-donboard').value,
+      status:newTarget,folha:nchk.folha,contabil:nchk.contabil
+    })});
+    clients=await loadKb();kbHash=hsh(clients);closeNew();renderKb();showToast('✦ Adicionado: '+nome);registrarLog('Adicionou cliente',nome);
+  }catch(e){alert('Erro: '+e.message);}
+  kbSaving=false;
+}
+
+// ── CONTROLE ──
+let movTipo='entrada';
+
+function initCtrl(){
+  const anoAtual=new Date().getFullYear();const mesAtual=new Date().getMonth();
+  const selMes=document.getElementById('sel-mes');const selAno=document.getElementById('sel-ano');
+  MESES.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;if(i===mesAtual)o.selected=true;selMes.appendChild(o);});
+  for(let y=anoAtual-2;y<=2030;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===anoAtual)o.selected=true;selAno.appendChild(o);}
+  const mm=document.getElementById('m-mes');const ma=document.getElementById('m-ano');
+  MESES.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;if(i===mesAtual)o.selected=true;mm.appendChild(o);});
+  for(let y=anoAtual-2;y<=2030;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===anoAtual)o.selected=true;ma.appendChild(o);}
+}
+
+async function loadMovs(){const d=await api('/movimentos?order=criado_em.desc');return d;}
+
+async function renderCtrl(){
+  let movs=[];try{movs=await loadMovs();}catch(e){console.error(e);}
+  const mes=parseInt(document.getElementById('sel-mes').value);const ano=parseInt(document.getElementById('sel-ano').value);
+
+  // Carregar clientes Entrada e Legalização do mês selecionado
+  let autoEntradas=[];
+  try{
+    // Clientes do Pipeline com status 'entrada' e data_entrada no mês/ano
+    const pipeline=await api('/clientes?status=eq.entrada&order=criado_em.desc');
+    pipeline.forEach(c=>{
+      if(!c.data_entrada)return;
+      const d=new Date(c.data_entrada);
+      if(d.getMonth()+1===mes&&d.getFullYear()===ano){
+        autoEntradas.push({id:'ent_'+c.id,nome:c.nome,honorarios:c.honorarios||'0',socio:c.socio||'',segmento:c.segmento||'Serviço',tipo:'entrada',origem:'Pipeline - Entrada',mes,ano});
+      }
+    });
+    // Processos de Legalização com status legal_* e data_entrada no mês/ano
+    const legal=await api('/clientes?status=like.legal_*&order=criado_em.desc');
+    legal.forEach(c=>{
+      if(!c.data_entrada)return;
+      const d=new Date(c.data_entrada);
+      if(d.getMonth()+1===mes&&d.getFullYear()===ano&&parseBRL(c.honorarios)>0){
+        autoEntradas.push({id:'leg_'+c.id,nome:c.nome,honorarios:c.honorarios||'0',socio:c.socio||'',segmento:c.segmento||'Legalização',tipo:'entrada',origem:'Legalização',mes,ano});
+      }
+    });
+  }catch(e){console.warn('Auto entradas:',e.message);}
+
+  const doMes=movs.filter(m=>m.mes===mes&&m.ano===ano);const doAno=movs.filter(m=>m.ano===ano);
+  const entMesManual=doMes.filter(m=>m.tipo==='entrada');const saiMes=doMes.filter(m=>m.tipo==='saida');
+  const entMes=[...entMesManual,...autoEntradas];
+  // Para o ano, buscar auto entradas de todos os meses do ano
+  let autoEntradasAno=[];
+  try{
+    const pipeline=await api('/clientes?status=eq.entrada&order=criado_em.desc');
+    const legal=await api('/clientes?status=like.legal_*&order=criado_em.desc');
+    pipeline.forEach(c=>{if(!c.data_entrada)return;const d=new Date(c.data_entrada);if(d.getFullYear()===ano)autoEntradasAno.push({honorarios:c.honorarios||'0',socio:c.socio||'',tipo:'entrada'});});
+    legal.forEach(c=>{if(!c.data_entrada)return;const d=new Date(c.data_entrada);if(d.getFullYear()===ano&&parseBRL(c.honorarios)>0)autoEntradasAno.push({honorarios:c.honorarios||'0',socio:c.socio||'',tipo:'entrada'});});
+  }catch(e){}
+  const entAno=[...doAno.filter(m=>m.tipo==='entrada'),...autoEntradasAno];
+  const saiAno=doAno.filter(m=>m.tipo==='saida');
+  const totEntMes=entMes.reduce((a,m)=>a+parseBRL(m.honorarios),0);const totSaiMes=saiMes.reduce((a,m)=>a+parseBRL(m.honorarios),0);
+  const totEntAno=entAno.reduce((a,m)=>a+parseBRL(m.honorarios),0);const totSaiAno=saiAno.reduce((a,m)=>a+parseBRL(m.honorarios),0);
+  const socios=['Pedro','Luciano','Rafael'];const medalhas=['🥇','🥈','🥉'];const rankColors=['#d97706','#6b7280','#b45309'];
+  const rankMes=socios.map(s=>({nome:s,entradas:entMes.filter(m=>m.socio===s).length,valorEnt:entMes.filter(m=>m.socio===s).reduce((a,m)=>a+parseBRL(m.honorarios),0),saidas:saiMes.filter(m=>m.socio===s).length,valorSai:saiMes.filter(m=>m.socio===s).reduce((a,m)=>a+parseBRL(m.honorarios),0)})).map(s=>({...s,saldo:s.valorEnt-s.valorSai})).sort((a,b)=>b.saldo-a.saldo);
+  const rankAnual=socios.map(s=>({nome:s,entradas:entAno.filter(m=>m.socio===s).length,valorEnt:entAno.filter(m=>m.socio===s).reduce((a,m)=>a+parseBRL(m.honorarios),0),saidas:saiAno.filter(m=>m.socio===s).length,valorSai:saiAno.filter(m=>m.socio===s).reduce((a,m)=>a+parseBRL(m.honorarios),0)})).map(s=>({...s,saldo:s.valorEnt-s.valorSai})).sort((a,b)=>b.saldo-a.saldo);
+
+  document.getElementById('ctrl-content').innerHTML=`
+    <div class="resumo-grid">
+      <div class="resumo-card" style="border-left-color:#16a34a"><div class="resumo-label">Entradas ${MESES[mes]}</div><div class="resumo-val" style="color:#16a34a">${entMes.length}</div><div class="resumo-sub">${fmtBRL(totEntMes)}</div></div>
+      <div class="resumo-card" style="border-left-color:#dc2626"><div class="resumo-label">Saídas ${MESES[mes]}</div><div class="resumo-val" style="color:#dc2626">${saiMes.length}</div><div class="resumo-sub">${fmtBRL(totSaiMes)}</div></div>
+      <div class="resumo-card" style="border-left-color:#1a6cf6"><div class="resumo-label">Entradas ${ano}</div><div class="resumo-val" style="color:#1a6cf6">${entAno.length}</div><div class="resumo-sub">${fmtBRL(totEntAno)}</div></div>
+      <div class="resumo-card" style="border-left-color:#dc2626"><div class="resumo-label">Saídas ${ano}</div><div class="resumo-val" style="color:#dc2626">${saiAno.length}</div><div class="resumo-sub">${fmtBRL(totSaiAno)}</div></div>
+      <div class="resumo-card" style="border-left-color:#8b5cf6"><div class="resumo-label">Saldo ${ano}</div><div class="resumo-val" style="color:${totEntAno-totSaiAno>=0?'#16a34a':'#dc2626'}">${fmtBRL(totEntAno-totSaiAno)}</div><div class="resumo-sub">${entAno.length} ent · ${saiAno.length} saí</div></div>
+    </div>
+    <div class="section-title">🏆 Ranking ${MESES[mes]} · ${ano}</div>
+    <div class="ranking-grid" style="margin-bottom:20px">${rankMes.map((s,i)=>`<div class="rank-card" style="border-top-color:${rankColors[i]}"><div class="rank-pos">${medalhas[i]}</div><div class="rank-nome">${s.nome}</div><div style="font-size:11px;color:#9ca3af;margin-bottom:4px">${s.entradas} ent · ${s.saidas} saí</div><div style="display:flex;flex-direction:column;gap:2px;font-size:12px"><span style="color:#16a34a;font-weight:600">▲ ${fmtBRL(s.valorEnt)}</span><span style="color:#dc2626;font-weight:600">▼ ${fmtBRL(s.valorSai)}</span><div style="border-top:1px solid #f3f4f6;margin-top:4px;padding-top:4px;font-size:13px;font-weight:700;color:${s.saldo>=0?'#16a34a':'#dc2626'}">= ${fmtBRL(s.saldo)}</div></div></div>`).join('')}</div>
+    <div class="section-title">🏆 Ranking Anual · ${ano}</div>
+    <div class="ranking-grid" style="margin-bottom:20px">${rankAnual.map((s,i)=>`<div class="rank-card" style="border-top-color:${rankColors[i]}"><div class="rank-pos">${medalhas[i]}</div><div class="rank-nome">${s.nome}</div><div style="font-size:11px;color:#9ca3af;margin-bottom:4px">${s.entradas} ent · ${s.saidas} saí</div><div style="display:flex;flex-direction:column;gap:2px;font-size:12px"><span style="color:#16a34a;font-weight:600">▲ ${fmtBRL(s.valorEnt)}</span><span style="color:#dc2626;font-weight:600">▼ ${fmtBRL(s.valorSai)}</span><div style="border-top:1px solid #f3f4f6;margin-top:4px;padding-top:4px;font-size:13px;font-weight:700;color:${s.saldo>=0?'#16a34a':'#dc2626'}">= ${fmtBRL(s.saldo)}</div></div></div>`).join('')}</div>
+    <div class="section-title"><span>✅ Entradas — ${MESES[mes]}/${ano}</span><span style="color:#16a34a">${fmtBRL(totEntMes)}</span></div>
+    <div class="table-wrap">${entMes.length===0?`<div style="text-align:center;padding:24px;color:#d1d5db;font-size:12px">Nenhuma entrada neste mês</div>`:`<table><thead><tr><th>Cliente</th><th>Honorários</th><th>Sócio</th><th>Origem</th></tr></thead><tbody>${entMes.map(m=>{const isAuto=m.id&&(m.id.startsWith('ent_')||m.id.startsWith('leg_'));return`<tr onclick="${isAuto?'':('openMovDet(\'' +m.id+ '\')')}" style="cursor:${isAuto?'default':'pointer'}"><td class="td-nome">${esc(m.nome)}</td><td class="td-val-pos">${fmtBRL(parseBRL(m.honorarios))}</td><td><span class="tag" style="background:#eff6ff;color:#1d4ed8">${esc(m.socio||'—')}</span></td><td><span class="tag" style="background:${m.origem?'#f0fdf4':'#f3f4f6'};color:${m.origem?'#16a34a':'#6b7280'}">${esc(m.origem||m.segmento||'Manual')}</span></td></tr>`;}).join('')}</tbody></table>`}</div>
+    <div class="section-title"><span>❌ Saídas — ${MESES[mes]}/${ano}</span><span style="color:#dc2626">${fmtBRL(totSaiMes)}</span></div>
+    <div class="table-wrap" style="margin-bottom:80px">${saiMes.length===0?`<div style="text-align:center;padding:24px;color:#d1d5db;font-size:12px">Nenhuma saída neste mês</div>`:`<table><thead><tr><th>Cliente</th><th>Honorários</th><th>Sócio</th><th>Motivo</th></tr></thead><tbody>${saiMes.map(m=>`<tr onclick="openMovDet('${m.id}')" style="cursor:pointer"><td class="td-nome">${esc(m.nome)}</td><td class="td-val-neg">${fmtBRL(parseBRL(m.honorarios))}</td><td><span class="tag" style="background:#eff6ff;color:#1d4ed8">${esc(m.socio)}</span></td><td style="font-size:12px;color:#9ca3af">${esc(m.obs||'—')}</td></tr>`).join('')}</tbody></table>`}</div>`;
+}
+
+function openMovimento(tipo){
+  movTipo=tipo;
+  document.getElementById('mov-title').textContent=tipo==='entrada'?'➕ Nova Entrada':'➖ Registrar Saída';
+  document.getElementById('mov-save-btn').className='btn '+(tipo==='entrada'?'btn-green':'btn-danger');
+  ['m-nome','m-hon','m-anual','m-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-socio').value='';document.getElementById('m-seg').value='';
+  document.getElementById('mov-overlay').classList.add('open');
+  setTimeout(()=>{
+    bindBRL('m-hon');
+    const mhon=document.getElementById('m-hon');
+    if(mhon)mhon.addEventListener('input',()=>{const v=parseBRL(mhon.value);document.getElementById('m-anual').value=v?fmtBRL(v*12):'';});
+  },100);
+}
+function closeMov(){document.getElementById('mov-overlay').classList.remove('open');}
+
+async function saveMov(){
+  const nome=document.getElementById('m-nome').value.trim();const hon=document.getElementById('m-hon').value.trim();const socio=document.getElementById('m-socio').value;
+  if(!nome||!hon||!socio){alert('Preencha cliente, honorários e sócio.');return;}
+  const mov={id:uid(),tipo:movTipo,nome,honorarios:hon,socio,segmento:document.getElementById('m-seg').value,obs:document.getElementById('m-obs').value,mes:parseInt(document.getElementById('m-mes').value),ano:parseInt(document.getElementById('m-ano').value),data:new Date().toISOString().slice(0,10)};
+  try{await api('/movimentos',{method:'POST',body:JSON.stringify(mov)});closeMov();await renderCtrl();showToast(movTipo==='entrada'?'✦ Entrada registrada':'✦ Saída registrada');}catch(e){alert('Erro ao salvar: '+e.message);}
+}
+
+async function openMovDet(id){
+  let movs=[];try{movs=await loadMovs();}catch{}
+  const m=movs.find(x=>x.id===id);if(!m)return;
+  const isEnt=m.tipo==='entrada';
+  document.getElementById('movdet-sheet').innerHTML=`<div class="sheet-head"><div><div class="sheet-title">${esc(m.nome)}</div><span class="status-pill" style="background:${isEnt?'#dcfce7':'#fee2e2'};color:${isEnt?'#15803d':'#dc2626'}">${isEnt?'Entrada':'Saída'}</span></div><button class="close-btn" onclick="closeMovDet()">×</button></div><div style="padding:16px 18px"><div class="grid2"><div class="field"><label>Honorários</label><input readonly value="${esc(m.honorarios)}" style="background:#f9fafb"/></div><div class="field"><label>Valor anual</label><input readonly value="${fmtBRL(parseBRL(m.honorarios)*12)}" style="background:#f9fafb"/></div><div class="field"><label>Sócio</label><input readonly value="${esc(m.socio)}" style="background:#f9fafb"/></div><div class="field"><label>Segmento</label><input readonly value="${esc(m.segmento||'—')}" style="background:#f9fafb"/></div><div class="field"><label>Período</label><input readonly value="${MESES[m.mes]}/${m.ano}" style="background:#f9fafb"/></div><div class="field"><label>Data registro</label><input readonly value="${fmtDate(m.data)}" style="background:#f9fafb"/></div>${m.obs?`<div class="field" style="grid-column:1/-1"><label>Observação</label><input readonly value="${esc(m.obs)}" style="background:#f9fafb"/></div>`:''}</div></div><div class="sheet-foot"><div class="foot-row"><button class="btn btn-danger" onclick="deleteMov('${m.id}')">Excluir</button><button class="btn btn-primary" onclick="closeMovDet()">Fechar</button></div></div>`;
+  document.getElementById('movdet-overlay').classList.add('open');
+}
+function closeMovDet(){document.getElementById('movdet-overlay').classList.remove('open');}
+async function deleteMov(id){
+  if(!confirm('Excluir este registro?'))return;
+  try{await api(`/movimentos?id=eq.${id}`,{method:'DELETE'});closeMovDet();await renderCtrl();showToast('✦ Registro excluído');}catch(e){alert('Erro: '+e.message);}
+}
+
+
+['edit-overlay','new-overlay','mov-overlay','movdet-overlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(el=>el.classList.remove('open'));});
+
+// Verificar se já tem usuário salvo
+if(usuarioAtual){
+  const us=document.getElementById('user-screen');
+  const ac=document.getElementById('app-container');
+  if(us)us.style.display='none';
+  if(ac){ac.style.display='block';ac.style.visibility='visible';}
+  const ind=document.getElementById('user-indicator');
+  if(ind)ind.textContent=usuarioAtual;
+  initKb();
+  initCtrl();
+}
+
+// ── LEGALIZAÇÃO ──
+const LEGAL_COLS=[
+  {id:'legal_solicitacao',  label:'Solicitação',          color:'#6366f1'},
+  {id:'legal_viabilidade',  label:'Viabilidade',           color:'#0ea5e9'},
+  {id:'legal_dbe',          label:'DBE',                   color:'#f59e0b'},
+  {id:'legal_requerimento', label:'Requerimento/Contrato', color:'#f97316'},
+  {id:'legal_assinatura',   label:'Assinatura/Protocolo',  color:'#8b5cf6'},
+  {id:'legal_em_analise',   label:'Em Análise',            color:'#f59e0b'},
+  {id:'legal_deferido',     label:'Deferido',              color:'#10b981'},
+  {id:'legal_finalizado',   label:'Finalizado',            color:'#16a34a'},
+  {id:'legal_doc_finais',   label:'Documentações Finais',  color:'#7c3aed'},
+];
+const LEGAL_ST={
+  legal_solicitacao: {bg:'#eef2ff',color:'#4338ca',label:'Solicitação'},
+  legal_viabilidade: {bg:'#e0f2fe',color:'#0369a1',label:'Viabilidade'},
+  legal_dbe:         {bg:'#fef3c7',color:'#92400e',label:'DBE'},
+  legal_requerimento:{bg:'#fff7ed',color:'#c2410c',label:'Requerimento/Contrato'},
+  legal_assinatura:  {bg:'#f5f3ff',color:'#6d28d9',label:'Assinatura/Protocolo'},
+  legal_em_analise:  {bg:'#fef3c7',color:'#92400e',label:'Em Análise'},
+  legal_deferido:    {bg:'#d1fae5',color:'#065f46',label:'Deferido'},
+  legal_finalizado:  {bg:'#dcfce7',color:'#15803d',label:'Finalizado'},
+  legal_doc_finais:  {bg:'#f5f3ff',color:'#6d28d9',label:'Documentações Finais'},
+};
+const LEGAL_NEXT={legal_solicitacao:'legal_viabilidade',legal_viabilidade:'legal_dbe',legal_dbe:'legal_requerimento',legal_requerimento:'legal_assinatura',legal_assinatura:'legal_em_analise',legal_em_analise:'legal_deferido',legal_deferido:'legal_finalizado',legal_finalizado:'legal_doc_finais',legal_doc_finais:null};
+const LEGAL_PREV={legal_solicitacao:null,legal_viabilidade:'legal_solicitacao',legal_dbe:'legal_viabilidade',legal_requerimento:'legal_dbe',legal_assinatura:'legal_requerimento',legal_em_analise:'legal_assinatura',legal_deferido:'legal_em_analise',legal_finalizado:'legal_deferido',legal_doc_finais:'legal_finalizado'};
+
+let legalItems=[],legalItemsAll=[],legalHash='',legalSaving=false,legalFiltroAnalista='',legalFiltroSocio='',legalFiltroExigencia=false,legalBusca='',kbBusca='';
+
+function rowToLegal(r){return{id:r.id,nome:r.nome,tipo:r.segmento,socio:r.socio,analista:r.analista,responsavel:r.responsavel,contato:r.telefone,prazo:r.data_onboarding,obs:r.obs,dados_cliente:r.dados_cliente,valor:r.honorarios,honorarios_mensais:r.honorarios_mensais,status:r.status,migrado_pipeline:r.migrado_pipeline,criado_em:r.criado_em,em_exigencia:r.em_exigencia,svc_cnpj:r.svc_cnpj,svc_insc_municipal:r.svc_insc_municipal,svc_sim_cim:r.svc_sim_cim,svc_cad_prefeitura:r.svc_cad_prefeitura,svc_procuracao:r.svc_procuracao};}
+async function loadLegal(){const d=await api('/clientes?status=like.legal_*&status=not.eq.legal_arquivado&order=criado_em.asc');return d.map(rowToLegal);}
+
+async function initLegal(){
+  const fab=document.getElementById('fab-legal');
+  if(fab)fab.style.display='flex';
+  const loadingEl=document.getElementById('loading-legal');
+  const boardEl=document.getElementById('legal-board');
+  // Mostrar imediatamente — nunca bloqueia
+  if(loadingEl)loadingEl.style.display='none';
+  if(boardEl)boardEl.style.display='flex';
+  renderLegal();
+  // Carregar dados em segundo plano
+  loadLegal().then(f=>{legalItems=f;legalHash=hsh(f);renderLegal();}).catch(e=>console.warn('Legal:',e.message));
+  // Polling — inicia apenas uma vez
+  if(!window._legalPollStarted){
+    window._legalPollStarted=true;
+    setInterval(async()=>{
+      if(legalSaving)return;
+      loadLegal().then(f=>{
+        const h=hsh(f);
+        if(h!==legalHash){legalItems=f;legalHash=h;renderLegal();
+          if(document.getElementById('page-kanban').classList.contains('active'))renderKb();
+        }
+      }).catch(()=>{});
+    },4000);
+  }
+}
+
+function legalCardHTML(c,col){
+  // Card especial para Documentações Finais
+  if(col.id==='legal_doc_finais'){
+    const socioNome=c.socio||c.responsavel||'';
+    return`<div class="card" data-id="${c.id}" style="border-left-color:${col.color};border-left-width:3px">
+      <div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#fff;background:${c.analista?'#6366f1':'#9ca3af'};padding:3px 10px;border-radius:99px">${c.analista?esc(c.analista):'Sem Analista'}</span></div>
+      <div class="card-name">${esc(c.nome)}</div>
+      ${c.tipo?`<div style="margin:3px 0 5px"><span class="badge" style="background:${col.color}18;color:${col.color}">${esc(c.tipo)}</span></div>`:''}
+      ${c.valor?`<div style="font-size:12px;font-weight:700;color:${col.color};margin-bottom:2px">${fmtBRL(parseBRL(c.valor))}<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:4px">(abertura)</span></div>`:''}
+    ${(c.honorarios_mensais&&c.tipo==='Abertura de Empresa')?`<div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:4px">${fmtBRL(parseBRL(c.honorarios_mensais))}<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:4px">/mês</span></div>`:''}
+      <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">
+        ${c.socio?`<div style="display:flex;gap:5px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:60px;flex-shrink:0">Sócio</span><span style="font-size:11px;color:#374151;font-weight:600">${esc(c.socio)}</span></div>`:''}
+        ${c.responsavel?`<div style="display:flex;gap:5px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:60px;flex-shrink:0">Resp.</span><span style="font-size:11px;color:#374151">${esc(c.responsavel)}</span></div>`:''}
+      </div>
+      ${c.em_exigencia?`<div style="margin-bottom:7px;padding:6px 10px;border-radius:8px;background:#fef2f2;border:1.5px solid #dc2626;display:flex;align-items:center;gap:6px"><span style="font-size:14px">⚠️</span><span style="font-size:11px;font-weight:700;color:#dc2626">EM EXIGÊNCIA</span></div>`:''}
+      ${c.tipo==='Abertura de Empresa'?`
+      <div style="margin-bottom:8px;display:flex;gap:4px;flex-wrap:wrap">
+        ${SVC_ABERTURA.map(s=>{const done=!!c[s.key];return`<div style="display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;background:${done?'#f0fdf4':'#fff5f5'};border:1px solid ${done?'#16a34a':'#dc2626'}"><div style="width:6px;height:6px;border-radius:50%;background:${done?'#16a34a':'#dc2626'}"></div><span style="font-size:9px;font-weight:700;color:${done?'#15803d':'#dc2626'}">${s.label}</span></div>`;}).join('')}
+      </div>`:''}
+      <button onclick="event.stopPropagation();confirmarDocFinal('${c.id}','${esc(c.nome)}')" style="width:100%;padding:9px;background:#7c3aed;border:none;border-radius:9px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+        ✅ Totalmente Finalizado
+      </button>
+    </div>`;
+  }
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  let prazoBlock='';
+  if(c.prazo){
+    const dp=new Date(c.prazo+'T00:00:00');
+    const diff=Math.ceil((dp-hoje)/(864e5));
+    const cor=diff<0?'#dc2626':diff<=3?'#d97706':'#16a34a';
+    const txt=diff<0?`⚠️ Vencido há ${Math.abs(diff)}d`:diff===0?'⚠️ Vence hoje':`${diff}d restantes`;
+    prazoBlock=`<div style="margin-top:7px;padding:6px 9px;border-radius:7px;background:${cor}12;border:1px solid ${cor}33;display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:700;color:${cor}">📅 ${fmtDate(c.prazo)}</span><span style="font-size:10px;color:${cor};font-weight:600">${txt}</span></div>`;
+  }
+  return`<div class="card" data-id="${c.id}" style="border-left-color:${c.em_exigencia?'#dc2626':col.color};${c.em_exigencia?'border-top:2px solid #dc2626;':''}">
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;font-weight:700;color:#fff;background:${c.analista?'#6366f1':'#9ca3af'};padding:3px 10px;border-radius:99px">${c.analista?esc(c.analista):'Sem Analista'}</span>
+      ${c.em_exigencia?`<span style="font-size:10px;font-weight:700;color:#dc2626;background:#fef2f2;padding:2px 8px;border-radius:99px;border:1px solid #dc2626">⚠️ Exigência</span>`:''}
+    </div>
+    <div class="card-name">${esc(c.nome)}</div>
+    ${c.tipo?`<div style="margin:3px 0 5px"><span class="badge" style="background:${col.color}18;color:${col.color}">${esc(c.tipo)}</span></div>`:''}
+    ${c.valor?`<div style="font-size:12px;font-weight:700;color:${col.color};margin-bottom:2px">${fmtBRL(parseBRL(c.valor))}<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:4px">(abertura)</span></div>`:''}
+    ${(c.honorarios_mensais&&c.tipo==='Abertura de Empresa')?`<div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:4px">${fmtBRL(parseBRL(c.honorarios_mensais))}<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:4px">/mês</span></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+      ${c.socio?`<div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:60px;flex-shrink:0">Sócio</span><span style="font-size:11px;color:#374151;font-weight:600">${esc(c.socio)}</span></div>`:''}
+      ${c.responsavel?`<div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:60px;flex-shrink:0">Resp.</span><span style="font-size:11px;color:#374151">${esc(c.responsavel)}</span></div>`:''}
+      ${c.contato?`<div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;width:60px;flex-shrink:0">Contato</span><span style="font-size:11px;color:#374151">${esc(c.contato)}</span></div>`:''}
+    </div>
+    ${c.obs?`<div style="font-size:11px;color:#6b7280;margin-top:6px;padding:6px 8px;background:#f9fafb;border-radius:7px;line-height:1.4">${esc(c.obs.slice(0,100))}${c.obs.length>100?'…':''}</div>`:''}
+    ${c.em_exigencia?`<div style="margin-top:8px;padding:6px 10px;border-radius:8px;background:#fef2f2;border:1.5px solid #dc2626;display:flex;align-items:center;gap:6px"><span style="font-size:14px">⚠️</span><span style="font-size:11px;font-weight:700;color:#dc2626">EM EXIGÊNCIA</span></div>`:''}
+    ${prazoBlock}
+    ${c.tipo==='Abertura de Empresa'?`
+    <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+      ${SVC_ABERTURA.map(s=>{const done=!!c[s.key];return`<div style="display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;background:${done?'#f0fdf4':'#fff5f5'};border:1px solid ${done?'#16a34a':'#dc2626'}"><div style="width:6px;height:6px;border-radius:50%;background:${done?'#16a34a':'#dc2626'}"></div><span style="font-size:9px;font-weight:700;color:${done?'#15803d':'#dc2626'}">${s.label}</span></div>`;}).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function setFiltroAnalista(val){
+  legalFiltroAnalista=val;
+  ['todos','a1','a2'].forEach(k=>{
+    const el=document.getElementById('filtro-'+k);
+    if(!el)return;
+    const active=(k==='todos'&&val==='')||(k==='a1'&&val==='Analista 1')||(k==='a2'&&val==='Analista 2');
+    el.style.background=active?'#111827':'#fff';
+    el.style.color=active?'#fff':'#374151';
+    el.style.borderColor=active?'#111827':'#e5e7eb';
+  });
+  renderLegal();
+}
+
+function setFiltroSocio(val){
+  legalFiltroSocio=val;
+  ['todos','pedro','luciano','rafael'].forEach(k=>{
+    const el=document.getElementById('filtro-socio-'+k);
+    if(!el)return;
+    const active=(k==='todos'&&val==='')||(k==='pedro'&&val==='Pedro')||(k==='luciano'&&val==='Luciano')||(k==='rafael'&&val==='Rafael');
+    el.style.background=active?'#111827':'#fff';
+    el.style.color=active?'#fff':'#374151';
+    el.style.borderColor=active?'#111827':'#e5e7eb';
+  });
+  renderLegal();
+}
+
+function setFiltroExigencia(val){
+  legalFiltroExigencia=val;
+  const sim=document.getElementById('filtro-exig-sim');
+  const nao=document.getElementById('filtro-exig-nao');
+  if(sim&&nao){
+    sim.style.background=val?'#dc2626':'#fff';
+    sim.style.color=val?'#fff':'#dc2626';
+    sim.style.borderColor=val?'#dc2626':'#e5e7eb';
+    nao.style.background=val?'#fff':'#111827';
+    nao.style.color=val?'#374151':'#fff';
+    nao.style.borderColor=val?'#e5e7eb':'#111827';
+  }
+  renderLegal();
+}
+
+async function toggleExigencia(clientId, currentVal){
+  const newVal=!currentVal;
+  try{
+    await api('/clientes?id=eq.'+clientId,{method:'PATCH',body:JSON.stringify({em_exigencia:newVal})});
+    const allLegal=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+    legalItemsAll=allLegal.map(rowToLegal);
+    legalItems=legalItemsAll.filter(l=>l.status!=='legal_arquivado');
+    legalHash=hsh(legalItems);
+    renderLegal();
+    showToast(newVal?'⚠️ Em Exigência marcado':'✅ Exigência resolvida');
+  }catch(e){showToast('Erro ao salvar');}
+}
+
+async function confirmarDocFinal(id, nome){
+  if(!confirm('Confirmar que "'+nome+'" esta totalmente finalizado? O processo sai da Legalizacao mas permanece no Pipeline.'))return;
+  legalSaving=true;
+  try{
+    await api('/clientes?id=eq.'+id,{method:'PATCH',body:JSON.stringify({status:'legal_arquivado'})});
+    const allLegal=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+    legalItemsAll=allLegal.map(rowToLegal);
+    legalItems=legalItemsAll.filter(l=>l.status!=='legal_arquivado');
+    legalHash=hsh(legalItems);
+    renderLegal();
+    if(document.getElementById('page-kanban').classList.contains('active'))renderKb();
+    showToast('✅ '+nome+' — arquivado! Permanece no Pipeline.');
+    registrarLog('Arquivou documentação',nome);
+  }catch(e){alert('Erro: '+e.message);}
+  legalSaving=false;
+}
+
+function renderLegal(){
+  const board=document.getElementById('legal-board');if(!board)return;
+  // Show filter bar
+  const filtroBar=document.getElementById('legal-filtro-bar');
+  if(filtroBar)filtroBar.style.display='flex';
+  board.innerHTML='';
+  LEGAL_COLS.forEach(col=>{
+    const allCards=legalItems.filter(c=>c.status===col.id).slice().reverse();
+    let cards=legalFiltroAnalista?allCards.filter(c=>c.analista===legalFiltroAnalista):allCards;
+    if(legalFiltroSocio)cards=cards.filter(c=>c.socio===legalFiltroSocio);
+    if(legalFiltroExigencia)cards=cards.filter(c=>!!c.em_exigencia);
+    if(legalBusca)cards=cards.filter(c=>c.nome&&c.nome.toLowerCase().includes(legalBusca.toLowerCase()));
+    const total=cards.reduce((a,c)=>a+parseBRL(c.valor),0);
+    const socios=['Pedro','Luciano','Rafael'];
+    const rankLegal=socios.map(s=>({nome:s,qtd:cards.filter(c=>c.socio===s).length,val:cards.filter(c=>c.socio===s).reduce((a,c)=>a+parseBRL(c.valor),0)})).filter(s=>s.qtd>0).sort((a,b)=>b.val-a.val);
+    const medalhas=['🥇','🥈','🥉'];
+    const totalBlock=`<div style="background:${col.color}12;border:1px solid ${col.color}33;border-radius:9px;padding:8px 10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${rankLegal.length>0?'7px':'0'}">
+        <span style="font-size:10px;font-weight:700;color:${col.color};text-transform:uppercase;letter-spacing:.06em">💰 Total</span>
+        <span style="font-size:14px;font-weight:800;color:${col.color}">${fmtBRL(total)}</span>
+      </div>
+      ${rankLegal.map((s,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${i<rankLegal.length-1?3:0}px"><span style="font-size:10px;font-weight:600;color:#374151">${medalhas[i]||''} ${s.nome}</span><div><span style="font-size:10px;font-weight:700;color:${col.color}">${fmtBRL(s.val)}</span><span style="font-size:9px;color:#9ca3af;margin-left:3px">(${s.qtd})</span></div></div>`).join('')}
+    </div>`;
+    const el=document.createElement('div');el.className='col';
+    el.innerHTML=`<div class="col-hdr"><div class="col-dot" style="background:${col.color}"></div><span class="col-title">${col.label}</span><span class="col-count">${cards.length}</span></div>${totalBlock}${cards.length===0?'<div class="empty">Nenhum processo</div>':''}${cards.map(c=>legalCardHTML(c,col)).join('')}<button class="add-btn" data-col="${col.id}">+ Nova solicitação</button>`;
+    board.appendChild(el);
+  });
+  board.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>openLegalEdit(el.dataset.id)));
+  board.querySelectorAll('.add-btn').forEach(el=>el.addEventListener('click',()=>openNewLegal(el.dataset.col)));
+}
+
+function openNewLegal(col){
+  const target=col||'nova';
+  const pill=document.getElementById('legal-new-pill');
+  const st=LEGAL_ST[target];pill.style.background=st.bg;pill.style.color=st.color;pill.textContent=st.label;
+  pill.dataset.col=target;
+  ['ln-nome','ln-resp','ln-obs','ln-contato','ln-valor','ln-hon-mensais','ln-dados'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['ln-tipo','ln-socio','ln-analista'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const prazo=document.getElementById('ln-prazo');if(prazo)prazo.value='';
+  document.getElementById('legal-new-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('ln-nome').focus(),100);
+}
+function closeLegalNew(){document.getElementById('legal-new-overlay').classList.remove('open');}
+
+async function saveLegalNew(){
+  const nome=document.getElementById('ln-nome').value.trim();
+  if(!nome){alert('Informe o nome do cliente.');return;}
+  const col=document.getElementById('legal-new-pill').dataset.col||'nova';
+  legalSaving=true;
+  try{
+    const lnTipo=document.getElementById('ln-tipo').value;
+    await api('/clientes',{method:'POST',body:JSON.stringify({
+      id:uid(),nome,
+      segmento:lnTipo,
+      honorarios:document.getElementById('ln-valor').value,
+      honorarios_mensais:(function(){var el=document.getElementById('ln-hon-mensais');return el?el.value:'';})(),
+      socio:document.getElementById('ln-socio').value,
+      analista:document.getElementById('ln-analista').value,
+      responsavel:document.getElementById('ln-resp').value,
+      telefone:document.getElementById('ln-contato').value,
+      data_onboarding:document.getElementById('ln-prazo').value,
+      obs:(document.getElementById('ln-dados').value?'Dados: '+document.getElementById('ln-dados').value+' | ':'')+document.getElementById('ln-obs').value,
+      email:'',cnpj:'',data_entrada:new Date().toISOString().slice(0,10),
+      regime:'',folha:false,contabil:false,
+      status:col.startsWith('legal_')?col:'legal_'+col
+    })});
+    legalItems=await loadLegal();legalHash=hsh(legalItems);
+    closeLegalNew();renderLegal();showToast('✦ Solicitação adicionada');
+  }catch(e){alert('Erro: '+e.message);}
+  legalSaving=false;
+}
+
+function openLegalEdit(id){
+  const c=legalItems.find(x=>x.id===id);if(!c)return;
+  const st=LEGAL_ST[c.status];
+  const nx=LEGAL_NEXT[c.status];const pv=LEGAL_PREV[c.status];
+  document.getElementById('legal-edit-sheet').innerHTML=`
+    <div class="sheet-head">
+      <div style="min-width:0"><div class="sheet-title">${esc(c.nome)}</div>
+      <span class="status-pill" style="background:${st.bg};color:${st.color}">${st.label}</span></div>
+      <button class="close-btn" onclick="closeLegalEdit()">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div class="field"><label>Cliente / Empresa</label><input id="le-nome" value="${esc(c.nome)}"/></div>
+      <div class="grid2">
+        <div class="field"><label>Tipo de Serviço</label><select id="le-tipo"><option value="">— Selecionar —</option>${['Abertura de Empresa','Encerramento','Alteração Contratual','Alvará','Regularização Fiscal','Certidão','Procuração','Outro'].map(t=>`<option ${c.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="field"><label>Valor do Serviço (Abertura)</label><input id="le-valor" value="${esc(c.valor||'')}" placeholder="R$ 0,00"/></div>
+        <div class="field"><label>Honorários Mensais</label><input id="le-hon-mensais" value="${esc(c.honorarios_mensais||'')}" placeholder="R$ 0,00"/></div>
+        <div class="field"><label>Sócio Advice</label><select id="le-socio"><option value="">— Selecionar —</option>${['Pedro','Luciano','Rafael'].map(s=>`<option ${c.socio===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>Responsável pela Empresa</label><input id="le-resp" value="${esc(c.responsavel||'')}"/></div>
+        <div class="field"><label>Analista Responsável</label><select id="le-analista" style="width:100%;padding:10px 12px;font-size:13px;border:1px solid #e5e7eb;border-radius:9px;background:#fff;color:#111827;outline:none;-webkit-appearance:none"><option value="">— Selecionar —</option><option ${c.analista==='Analista 1'?'selected':''}>Analista 1</option><option ${c.analista==='Analista 2'?'selected':''}>Analista 2</option></select></div>
+        <div class="field"><label>Contato</label><input id="le-contato" value="${esc(c.contato||'')}" placeholder="Telefone ou e-mail"/></div>
+        <div class="field"><label>Prazo / Previsão</label><input type="date" id="le-prazo" value="${c.prazo||''}"/></div>
+      </div>
+      <div class="field"><label>Dados do Cliente (para o processo)</label><textarea id="le-dados" style="min-height:80px">${c.dados_cliente?esc(c.dados_cliente):''}</textarea></div>
+      <div class="field"><label>Observações</label><textarea id="le-obs">${esc(c.obs||'')}</textarea></div>
+      <div style="padding:12px 0">
+        <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Em Exigência</div>
+        <div style="display:flex;gap:8px">
+          <button type="button" onclick="toggleExigencia('${c.id}',false)" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:2px solid ${c.em_exigencia?'#e5e7eb':'#dc2626'};background:${c.em_exigencia?'#fff':'#fef2f2'};color:${c.em_exigencia?'#9ca3af':'#dc2626'}">⚠️ Sim</button>
+          <button type="button" onclick="toggleExigencia('${c.id}',true)" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:2px solid ${c.em_exigencia?'#16a34a':'#e5e7eb'};background:${c.em_exigencia?'#f0fdf4':'#fff'};color:${c.em_exigencia?'#16a34a':'#9ca3af'}">✅ Não</button>
+        </div>
+      </div>
+      ${(c.tipo==='Abertura de Empresa'||c.segmento==='Abertura de Empresa')?`
+      <div style="margin-top:8px;padding:12px 14px;border-radius:10px;background:#f8fafc;border:1px solid #e5e7eb">
+        <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">✅ Serviços Executados</div>
+        ${SVC_ABERTURA.map(s=>{
+          const done=!!c[s.key];
+          return`<div onclick="toggleSvcAberturaLegal('${c.id}','${s.key}',${done},this)" style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;border-radius:8px;border:1px solid ${done?'#16a34a':'#dc2626'};background:${done?'#f0fdf4':'#fff5f5'};cursor:pointer">
+            <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${done?'#16a34a':'#dc2626'};background:${done?'#16a34a':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              ${done?'<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+            </div>
+            <span style="font-size:13px;font-weight:600;color:${done?'#15803d':'#dc2626'};flex:1">${s.label}</span>
+            <div style="width:8px;height:8px;border-radius:50%;background:${done?'#16a34a':'#dc2626'}"></div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+    </div>
+    <div class="sheet-foot">
+      <div class="foot-row">${pv?`<button class="btn" onclick="legalMover('${c.id}','${pv}')">← ${LEGAL_ST[pv].label}</button>`:''}${nx?`<button class="btn btn-blue" onclick="legalMover('${c.id}','${nx}')">Mover → ${LEGAL_ST[nx].label}</button>`:''}</div>
+      <div class="foot-row"><button class="btn btn-danger" onclick="legalDeletar('${c.id}')">Remover</button><button class="btn btn-primary" onclick="legalSalvar('${c.id}')">Salvar</button></div>
+    </div>`;
+  document.getElementById('legal-edit-overlay').classList.add('open');
+}
+function closeLegalEdit(){document.getElementById('legal-edit-overlay').classList.remove('open');}
+
+async function legalSalvar(id){
+  legalSaving=true;
+  try{
+    await api(`/clientes?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({
+      nome:document.getElementById('le-nome').value,
+      segmento:document.getElementById('le-tipo').value,
+      honorarios:document.getElementById('le-valor').value,
+      honorarios_mensais:(function(){var el=document.getElementById('le-hon-mensais');return el?el.value:'';})(),
+      socio:document.getElementById('le-socio').value,
+      responsavel:document.getElementById('le-resp').value,
+      telefone:document.getElementById('le-contato').value,
+      data_onboarding:document.getElementById('le-prazo').value,
+      obs:document.getElementById('le-obs').value,
+      dados_cliente:(function(){var el=document.getElementById('le-dados');return el?el.value:'';})(),
+      analista:document.getElementById('le-analista').value
+    })});
+    const allL=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+    legalItemsAll=allL.map(rowToLegal);
+    legalItems=legalItemsAll.filter(l=>l.status!=='legal_arquivado');
+    legalHash=hsh(legalItems);closeLegalEdit();renderLegal();showToast('✦ Salvo');
+  }catch(e){alert('Erro: '+e.message);}
+  legalSaving=false;
+}
+
+async function legalMover(id,status){
+  legalSaving=true;
+  try{
+    await api(`/clientes?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({status:'legal_'+status.replace('legal_','')})});
+    legalItems=await loadLegal();legalHash=hsh(legalItems);closeLegalEdit();renderLegal();
+    if(document.getElementById('page-kanban').classList.contains('active'))renderKb();
+    showToast('✦ Movido para '+LEGAL_ST['legal_'+status.replace('legal_','')].label);
+  }catch(e){alert('Erro: '+e.message);}
+  legalSaving=false;
+}
+
+async function legalDeletar(id){
+  if(!confirm('Remover este processo?'))return;legalSaving=true;
+  try{
+    await api(`/clientes?id=eq.${id}`,{method:'DELETE'});
+    legalItems=await loadLegal();legalHash=hsh(legalItems);closeLegalEdit();renderLegal();showToast('✦ Removido');
+  }catch(e){alert('Erro: '+e.message);}
+  legalSaving=false;
+}
+
+// Abrir processo legal direto do Pipeline com opção de mover para etapas do Pipeline
+function openLegalFromPipeline(id){
+  const c=(legalItemsAll.length>0?legalItemsAll:legalItems).find(x=>x.id===id);
+  if(!c){showToast('Processo não encontrado');return;}
+  const sheet=document.getElementById('edit-sheet');
+  sheet.innerHTML=`
+    <div class="sheet-head">
+      <div style="min-width:0">
+        <div class="sheet-title">${esc(c.nome)}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px">
+          <span class="status-pill" style="background:#dcfce7;color:#15803d">✅ Legalização Finalizada</span>
+          ${c.tipo?`<span class="status-pill" style="background:#e0f2fe;color:#0369a1">${esc(c.tipo)}</span>`:''}
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeEdit()">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">📋 Dados do Processo</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${c.valor?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Honorários Abertura</span><span style="font-size:13px;font-weight:700;color:#16a34a">${fmtBRL(parseBRL(c.valor))}</span></div>`:''}
+          ${(c.honorarios_mensais&&c.tipo==='Abertura de Empresa')?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Hon. Mensais</span><span style="font-size:13px;font-weight:700;color:#0ea5e9">${fmtBRL(parseBRL(c.honorarios_mensais))}</span></div>`:''}
+          ${c.socio?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Sócio</span><span style="font-size:13px;color:#111827;font-weight:600">${esc(c.socio)}</span></div>`:''}
+          ${c.responsavel?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Responsável</span><span style="font-size:13px;color:#374151">${esc(c.responsavel)}</span></div>`:''}
+          ${c.contato?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Contato</span><span style="font-size:13px;color:#374151">${esc(c.contato)}</span></div>`:''}
+          ${c.obs?`<div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:700;color:#6b7280;width:80px;flex-shrink:0">Obs.</span><span style="font-size:12px;color:#6b7280">${esc(c.obs)}</span></div>`:''}
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">🚀 Iniciar no Pipeline</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="moverLegalParaPipeline('${id}','prospeccao')" style="padding:12px 8px;border-radius:10px;border:2px solid #f59e0b;background:#fef3c7;color:#92400e;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Prospecção</button>
+        <button onclick="moverLegalParaPipeline('${id}','entrada')" style="padding:12px 8px;border-radius:10px;border:2px solid #1a6cf6;background:#dbeafe;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Entrada</button>
+        <button onclick="moverLegalParaPipeline('${id}','legalizacao')" style="padding:12px 8px;border-radius:10px;border:2px solid #0ea5e9;background:#e0f2fe;color:#0369a1;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Legalização</button>
+        <button onclick="moverLegalParaPipeline('${id}','onboarding')" style="padding:12px 8px;border-radius:10px;border:2px solid #d97706;background:#fef3c7;color:#92400e;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Onboarding</button>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <div class="foot-row">
+        <button class="btn" onclick="closeEdit()">Fechar</button>
+        <button class="btn btn-primary" onclick="closeEdit();switchPage('legal');setTimeout(()=>openLegalEdit('${id}'),300)">Editar na Legalização</button>
+      </div>
+    </div>`;
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+async function moverLegalParaPipeline(legalId, pipelineStatus){
+  const c=(legalItemsAll.length>0?legalItemsAll:legalItems).find(x=>x.id===legalId);
+  if(!c){alert('Processo nao encontrado. ID: '+legalId);return;}
+  kbSaving=true;
+  try{
+    // Criar novo cliente no Pipeline com dados da Legalização
+    const novoId=uid();
+    await api('/clientes',{method:'POST',body:JSON.stringify({
+      id:novoId,
+      nome:c.nome,
+      segmento:'Serviço',
+      responsavel:c.responsavel||'',
+      socio:c.socio||'',
+      telefone:c.contato||'',
+      email:'',cnpj:'',honorarios:c.honorarios_mensais||c.valor||'',
+      obs:'Origem: '+(c.tipo||'Abertura de Empresa')+' | '+(c.obs||''),
+      data_entrada:new Date().toISOString().slice(0,10),
+      data_onboarding:'',regime:'simples',
+      folha:false,contabil:false,
+      status:pipelineStatus
+    })});
+    // Marcar como migrado — sai do card Pipeline mas NÃO muda status na aba Legalização
+    await api('/clientes?id=eq.'+legalId,{method:'PATCH',body:JSON.stringify({migrado_pipeline:true})});
+    // Recarregar tudo do banco
+    clients=await loadKb();kbHash=hsh(clients);
+    const allLegal=await api('/clientes?status=like.legal_*&order=criado_em.asc');
+    legalItemsAll=allLegal.map(rowToLegal);
+    legalItems=legalItemsAll.filter(l=>l.status!=='legal_arquivado');
+    legalHash=hsh(legalItems);
+    closeEdit();renderKb();
+    showToast('✦ '+c.nome+' adicionado ao Pipeline → '+ST[pipelineStatus].label);
+  }catch(e){alert('Erro: '+e.message);}
+  kbSaving=false;
+}
+
+// Override switchPage to handle legal tab
+async function renderLog(){
+  const filtro=document.getElementById('log-filtro-usuario')?.value||'';
+  const url=filtro?`/logs?usuario=eq.${filtro}&order=criado_em.desc&limit=100`:`/logs?order=criado_em.desc&limit=100`;
+  try{
+    const logs=await api(url);
+    const el=document.getElementById('log-content');
+    if(!el)return;
+    if(!logs||logs.length===0){el.innerHTML='<div style="text-align:center;padding:40px;color:#9ca3af;font-size:13px">Nenhuma atividade registrada</div>';return;}
+    const acaoCor={'Adicionou cliente':'#16a34a','Editou cliente':'#1a6cf6','Moveu cliente':'#d97706','Removeu cliente':'#dc2626'};
+    el.innerHTML=logs.map(l=>{
+      const cor=acaoCor[l.acao]||'#6b7280';
+      const dt=new Date(l.criado_em);
+      const dtStr=`${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()} ${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}`;
+      // Extrair dispositivo do detalhe se presente
+      const detalheMatch=l.detalhe?l.detalhe.match(/^(.*?)\s*\[(.+?)\]\s*$/):[null,l.detalhe,''];
+      const detalheTexto=detalheMatch?detalheMatch[1]:l.detalhe||'';
+      const dispositivo=detalheMatch&&detalheMatch[2]?detalheMatch[2]:'';
+      return`<div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid #e5e7eb;display:flex;align-items:flex-start;gap:12px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${cor};flex-shrink:0;margin-top:5px"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+            <span style="font-size:12px;font-weight:700;color:${cor}">${l.acao}</span>
+            <span style="font-size:11px;font-weight:600;background:#f3f4f6;padding:1px 8px;border-radius:99px;color:#374151">👤 ${l.usuario}</span>
+            ${dispositivo?`<span style="font-size:10px;font-weight:500;background:#eff6ff;padding:1px 8px;border-radius:99px;color:#1d4ed8">📱 ${dispositivo}</span>`:''}
+          </div>
+          <div style="font-size:13px;color:#111827;font-weight:500;margin-bottom:3px">${detalheTexto}</div>
+          <div style="font-size:10px;color:#9ca3af">${dtStr}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    const el=document.getElementById('log-content');
+    if(el)el.innerHTML=`<div style="text-align:center;padding:40px;color:#dc2626;font-size:13px">Erro: ${e.message}</div>`;
+  }
+}
+
+const _origSwitchPage=switchPage;
+window.switchPage=function(p){
+  _origSwitchPage(p);
+  const fab=document.getElementById('fab-legal');
+  if(fab)fab.style.display=p==='legal'?'flex':'none';
+  if(p==='log'){renderLog();return;}
+  if(p==='legal'){
+    const lba=document.getElementById('legal-busca-bar');if(lba)lba.style.display='block';
+    // Sempre reinicia o legal quando muda para a aba
+    const loadingEl=document.getElementById('loading-legal');
+    const boardEl=document.getElementById('legal-board');
+    if(loadingEl)loadingEl.style.display='none';
+    if(boardEl)boardEl.style.display='flex';
+    renderLegal();
+    // Tenta atualizar dados em segundo plano
+    loadLegal().then(f=>{legalItems=f;legalHash=hsh(f);renderLegal();}).catch(()=>{});
+  }
+};
+
+['legal-new-overlay','legal-edit-overlay'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+</script>
+</body>
+</html>
